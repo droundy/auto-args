@@ -10,7 +10,7 @@ pub trait AutoArgs: Sized {
     /// remaining arguments if it was successful.  Otherwise return an
     /// error message indicating what went wrong.  The `prefix` is
     /// a string that should be inserted prior to a flag name.
-    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments) -> Result<Self, pico_args::Error>;
+    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments) -> Result<Self, Error>;
     /// Indicates whether this type requires any input.
     ///
     /// This is false if the data may be processed with no input, true
@@ -20,10 +20,10 @@ pub trait AutoArgs: Sized {
         false
     }
     /// Return a tiny  help message.
-    fn tiny_help_message(key: &'static str, name: &'static str) -> String;
+    fn tiny_help_message(key: &'static str) -> String;
     /// Return a help message.
-    fn help_message(key: &'static str, name: &'static str, doc: &'static str) -> String {
-        format!("    {}  {}", Self::tiny_help_message(key, name), doc)
+    fn help_message(key: &'static str, doc: &'static str) -> String {
+        format!("    {}  {}", Self::tiny_help_message(key), doc)
     }
 }
 
@@ -58,12 +58,12 @@ impl From<pico_args::Error> for Error {
 }
 
 impl AutoArgs for String {
-    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments) -> Result<Self, pico_args::Error> {
+    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments) -> Result<Self, Error> {
         if key == "" {
             let copy = args.clone();
             let free = copy.free()?;
             if free.len() == 0 {
-                Err(pico_args::Error::OptionWithoutAValue(""))
+                Err(Error::Pico(pico_args::Error::OptionWithoutAValue("")))
             } else {
                 *args = pico_args::Arguments::from_args(free[1..].to_vec());
                 Ok(free[0].clone())
@@ -72,17 +72,102 @@ impl AutoArgs for String {
             if let Some(a) = args.value_from_str(key)? {
                 Ok(a)
             } else {
-                Err(pico_args::Error::OptionWithoutAValue(key))
+                Err(Error::MissingOption(key))
             }
         }
     }
-    fn tiny_help_message(key: &'static str, name: &'static str) -> String {
-        let name = if name == "" { "STRING" } else { name };
+    fn tiny_help_message(key: &'static str) -> String {
         if key == "" {
-            name.to_string()
+            "STRING".to_string()
         } else {
-            format!("{} {}", key, name)
+            format!("{} STRING", key)
         }
+    }
+}
+
+macro_rules! impl_from {
+    ($t:ty, $tyname:expr) => {
+        impl AutoArgs for $t {
+            fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+                              -> Result<Self, pico_args::Error> {
+                let conflicts: Vec<_> = info.conflicted_flags.iter().map(AsRef::as_ref).collect();
+                let ruo: Vec<_> = info.required_unless_one.iter().map(AsRef::as_ref).collect();
+                if info.name == "" {
+                    f(app.arg(clap::Arg::with_name(info.name)
+                              .takes_value(true)
+                              .value_name($tyname)
+                              .requires_all(info.required_flags)
+                              .required(info.required)
+                              .help(&info.help)
+                              .validator(|s| Self::from_str(&s).map(|_| ())
+                                         .map_err(|e| e.to_string()))))
+                } else if ruo.len() > 0 {
+                    f(app.arg(clap::Arg::with_name(info.name)
+                              .long(info.name)
+                              .takes_value(true)
+                              .value_name($tyname)
+                              .requires_all(info.required_flags)
+                              .required(info.required)
+                              .conflicts_with_all(&conflicts)
+                              .required_unless_one(&ruo)
+                              .help(&info.help)
+                              .validator(|s| Self::from_str(&s).map(|_| ())
+                                         .map_err(|e| e.to_string()))))
+                } else {
+                    f(app.arg(clap::Arg::with_name(info.name)
+                              .long(info.name)
+                              .takes_value(true)
+                              .value_name($tyname)
+                              .requires_all(info.required_flags)
+                              .required(info.required)
+                              .conflicts_with_all(&conflicts)
+                              .help(&info.help)
+                              .validator(|s| Self::from_str(&s).map(|_| ())
+                                         .map_err(|e| e.to_string()))))
+                }
+            }
+            fn from_clap(name: &str, matches: &clap::ArgMatches) -> Option<Self> {
+                // println!("from {} {:?}", name, matches.value_of(name));
+                matches.value_of(name).map(|s| Self::from_str(s).unwrap())
+            }
+        }
+
+        // impl ClapMe for Vec<$t> {
+        //     fn with_clap<TT>(info: ArgInfo, app: clap::App,
+        //                      f: impl FnOnce(clap::App) -> TT) -> TT {
+        //         let conflicts: Vec<_> = info.conflicted_flags.iter().map(AsRef::as_ref).collect();
+        //         if info.name == "" {
+        //             f(app.arg(clap::Arg::with_name(info.name)
+        //                       .takes_value(true)
+        //                       .value_name($tyname)
+        //                       .required(false)
+        //                       .requires_all(info.required_flags)
+        //                       .multiple(true)
+        //                       .help(&info.help)
+        //                       .validator(|s| <$t>::from_str(&s).map(|_| ())
+        //                                  .map_err(|_| "oops".to_owned()))))
+        //         } else {
+        //             f(app.arg(clap::Arg::with_name(info.name)
+        //                       .long(info.name)
+        //                       .takes_value(true)
+        //                       .value_name($tyname)
+        //                       .required(false)
+        //                       .requires_all(info.required_flags)
+        //                       .conflicts_with_all(&conflicts)
+        //                       .multiple(true)
+        //                       .help(&info.help)
+        //                       .validator(|s| <$t>::from_str(&s).map(|_| ())
+        //                                  .map_err(|_| "oops".to_owned()))))
+        //         }
+        //     }
+        //     fn from_clap(name: &str, matches: &clap::ArgMatches) -> Option<Self> {
+        //         Some(matches.values_of(name).unwrap_or(clap::Values::default())
+        //              .map(|s| <$t>::from_str(s).unwrap()).collect())
+        //     }
+        //     fn requires_flags(_name: &str) -> Vec<String> {
+        //         vec![]
+        //     }
+        // }
     }
 }
 
