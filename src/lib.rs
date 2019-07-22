@@ -158,11 +158,20 @@ mod tests {
         assert_eq!(T::parse_internal(key, &mut args).unwrap(), result);
     }
 
+    fn shouldnt_parse<T: Eq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
+                                                          key: &'static str) {
+        let owned_args: Vec<String> = args.iter().map(|x| x.to_string()).collect();
+        let mut args = pico_args::Arguments::from_args(owned_args);
+        assert!(T::parse_internal(key, &mut args).is_err());
+    }
+
     #[test]
     fn hello_world() {
         let flags = &["--hello", "world", "--bad"];
         should_parse(flags, "--hello", "world".to_string());
         should_parse(flags, "--hello", "world".to_string());
+        shouldnt_parse::<String>(flags, "--helloo");
+        shouldnt_parse::<u8>(flags, "--hello");
     }
     #[test]
     fn positional_arg() {
@@ -174,5 +183,6 @@ mod tests {
         let flags = &["--hello", "8", "--goodbye", "255", "--bad"];
         should_parse(flags, "--hello", 8u8);
         should_parse(flags, "--goodbye", 255u8);
+        shouldnt_parse::<String>(flags, "--helloo");
     }
 }
