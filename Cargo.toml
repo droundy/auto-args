@@ -1,0 +1,11 @@
+[package]
+name = "auto-args"
+version = "0.1.0"
+authors = ["David Roundy <daveroundy@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+pico-args = "0.1.0"
+auto-args-derive =  { path = "auto-args-derive", version = "0.1.0" }
+
+[workspace]
