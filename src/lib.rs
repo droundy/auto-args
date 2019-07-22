@@ -89,46 +89,20 @@ macro_rules! impl_from {
     ($t:ty, $tyname:expr) => {
         impl AutoArgs for $t {
             fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
-                              -> Result<Self, pico_args::Error> {
-                let conflicts: Vec<_> = info.conflicted_flags.iter().map(AsRef::as_ref).collect();
-                let ruo: Vec<_> = info.required_unless_one.iter().map(AsRef::as_ref).collect();
-                if info.name == "" {
-                    f(app.arg(clap::Arg::with_name(info.name)
-                              .takes_value(true)
-                              .value_name($tyname)
-                              .requires_all(info.required_flags)
-                              .required(info.required)
-                              .help(&info.help)
-                              .validator(|s| Self::from_str(&s).map(|_| ())
-                                         .map_err(|e| e.to_string()))))
-                } else if ruo.len() > 0 {
-                    f(app.arg(clap::Arg::with_name(info.name)
-                              .long(info.name)
-                              .takes_value(true)
-                              .value_name($tyname)
-                              .requires_all(info.required_flags)
-                              .required(info.required)
-                              .conflicts_with_all(&conflicts)
-                              .required_unless_one(&ruo)
-                              .help(&info.help)
-                              .validator(|s| Self::from_str(&s).map(|_| ())
-                                         .map_err(|e| e.to_string()))))
-                } else {
-                    f(app.arg(clap::Arg::with_name(info.name)
-                              .long(info.name)
-                              .takes_value(true)
-                              .value_name($tyname)
-                              .requires_all(info.required_flags)
-                              .required(info.required)
-                              .conflicts_with_all(&conflicts)
-                              .help(&info.help)
-                              .validator(|s| Self::from_str(&s).map(|_| ())
-                                         .map_err(|e| e.to_string()))))
+                              -> Result<Self, Error> {
+                use std::str::FromStr;
+                let the_arg = String::parse_internal(key, args)?;
+                match Self::from_str(&the_arg) {
+                    Ok(val) => Ok(val),
+                    Err(e) => Err(Error::Pico(pico_args::Error::OptionValueParsingFailed(key, e.to_string()))),
                 }
             }
-            fn from_clap(name: &str, matches: &clap::ArgMatches) -> Option<Self> {
-                // println!("from {} {:?}", name, matches.value_of(name));
-                matches.value_of(name).map(|s| Self::from_str(s).unwrap())
+            fn tiny_help_message(key: &'static str) -> String {
+                if key == "" {
+                    $tyname.to_string()
+                } else {
+                    format!("{} {}", key, $tyname)
+                }
             }
         }
 
@@ -171,6 +145,8 @@ macro_rules! impl_from {
     }
 }
 
+impl_from!(u8, "u8");
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -192,5 +168,11 @@ mod tests {
     fn positional_arg() {
         let flags = &["bad"];
         should_parse(flags, "", "bad".to_string());
+    }
+    #[test]
+    fn arg_u8() {
+        let flags = &["--hello", "8", "--goodbye", "255", "--bad"];
+        should_parse(flags, "--hello", 8u8);
+        should_parse(flags, "--goodbye", 255u8);
     }
 }
