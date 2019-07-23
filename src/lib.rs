@@ -34,7 +34,7 @@ pub enum Error {
     Pico(pico_args::Error),
 
     /// A missing required flag.
-    MissingOption(&'static str),
+    MissingOption(String),
 }
 
 impl std::fmt::Display for Error {
@@ -72,7 +72,7 @@ impl AutoArgs for String {
             if let Some(a) = args.value_from_str(key)? {
                 Ok(a)
             } else {
-                Err(Error::MissingOption(key))
+                Err(Error::MissingOption(key.to_string()))
             }
         }
     }
