@@ -85,6 +85,33 @@ impl AutoArgs for String {
     }
 }
 
+impl AutoArgs for Vec<String> {
+    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+                      -> Result<Self, Error> {
+        let mut res: Self = Vec::new();
+        loop {
+            match String::parse_internal(key, args) {
+                Ok(the_arg) => {
+                    res.push(the_arg);
+                }
+                Err(Error::MissingOption(_)) => {
+                    return Ok(res);
+                }
+                Err(e) => {
+                    return Err(e);
+                }
+            }
+        }
+    }
+    fn tiny_help_message(key: &'static str) -> String {
+        if key == "" {
+            "STRING...".to_string()
+        } else {
+            format!("{} STRING ...", key)
+        }
+    }
+}
+
 macro_rules! impl_from {
     ($t:ty, $tyname:expr) => {
         impl AutoArgs for $t {
@@ -106,42 +133,32 @@ macro_rules! impl_from {
             }
         }
 
-        // impl ClapMe for Vec<$t> {
-        //     fn with_clap<TT>(info: ArgInfo, app: clap::App,
-        //                      f: impl FnOnce(clap::App) -> TT) -> TT {
-        //         let conflicts: Vec<_> = info.conflicted_flags.iter().map(AsRef::as_ref).collect();
-        //         if info.name == "" {
-        //             f(app.arg(clap::Arg::with_name(info.name)
-        //                       .takes_value(true)
-        //                       .value_name($tyname)
-        //                       .required(false)
-        //                       .requires_all(info.required_flags)
-        //                       .multiple(true)
-        //                       .help(&info.help)
-        //                       .validator(|s| <$t>::from_str(&s).map(|_| ())
-        //                                  .map_err(|_| "oops".to_owned()))))
-        //         } else {
-        //             f(app.arg(clap::Arg::with_name(info.name)
-        //                       .long(info.name)
-        //                       .takes_value(true)
-        //                       .value_name($tyname)
-        //                       .required(false)
-        //                       .requires_all(info.required_flags)
-        //                       .conflicts_with_all(&conflicts)
-        //                       .multiple(true)
-        //                       .help(&info.help)
-        //                       .validator(|s| <$t>::from_str(&s).map(|_| ())
-        //                                  .map_err(|_| "oops".to_owned()))))
-        //         }
-        //     }
-        //     fn from_clap(name: &str, matches: &clap::ArgMatches) -> Option<Self> {
-        //         Some(matches.values_of(name).unwrap_or(clap::Values::default())
-        //              .map(|s| <$t>::from_str(s).unwrap()).collect())
-        //     }
-        //     fn requires_flags(_name: &str) -> Vec<String> {
-        //         vec![]
-        //     }
-        // }
+        impl AutoArgs for Vec<$t> {
+            fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+                              -> Result<Self, Error> {
+                let mut res: Self = Vec::new();
+                loop {
+                    match <$t>::parse_internal(key, args) {
+                        Ok(val) => {
+                            res.push(val);
+                        }
+                        Err(Error::MissingOption(_)) => {
+                            return Ok(res);
+                        }
+                        Err(e) => {
+                            return Err(e);
+                        }
+                    }
+                }
+            }
+            fn tiny_help_message(key: &'static str) -> String {
+                if key == "" {
+                    format!("{}...", $tyname.to_string())
+                } else {
+                    format!("{} {} ...", key, $tyname)
+                }
+            }
+        }
     }
 }
 
@@ -180,6 +197,14 @@ mod tests {
         let flags = &["--hello", "world", "--bad"];
         should_parse(flags, "--hello", "world".to_string());
         should_parse(flags, "--hello", "world".to_string());
+        shouldnt_parse::<String>(flags, "--helloo");
+        shouldnt_parse::<u8>(flags, "--hello");
+    }
+    #[test]
+    fn hello_list() {
+        let flags = &["--hello", "big", "--hello", "bad", "--hello", "wolf"];
+        should_parse(flags, "--hello",
+                     vec!["big".to_string(), "bad".to_string(), "wolf".to_string()]);
         shouldnt_parse::<String>(flags, "--helloo");
         shouldnt_parse::<u8>(flags, "--hello");
     }
