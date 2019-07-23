@@ -4,6 +4,7 @@
 //! defining a struct to hold your options.
 
 use std::ffi::OsString;
+use std::path::PathBuf;
 
 /// The primary trait, which is implemented by any type which may be
 /// part of your command-line flags.
@@ -66,77 +67,88 @@ impl std::fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
-impl AutoArgs for String {
-    fn parse_internal(key: &'static str, args: &mut Vec<OsString>) -> Result<Self, Error> {
-        if key == "" {
-            if args.len() == 0 {
-                Err(Error::OptionWithoutAValue("".to_string()))
-            } else {
-                let arg = if args[0] == "--" {
-                    if args.len() > 1 {
-                        args.remove(1)
+macro_rules! impl_from_osstr {
+    ($t:ty, $tyname:expr, $conv:expr) => {
+        impl AutoArgs for $t {
+            fn parse_internal(key: &'static str, args: &mut Vec<OsString>) -> Result<Self, Error> {
+                let convert = $conv;
+                if key == "" {
+                    if args.len() == 0 {
+                        Err(Error::OptionWithoutAValue("".to_string()))
                     } else {
-                        return Err(Error::OptionWithoutAValue("".to_string()));
+                        let arg = if args[0] == "--" {
+                            if args.len() > 1 {
+                                args.remove(1)
+                            } else {
+                                return Err(Error::OptionWithoutAValue("".to_string()));
+                            }
+                        } else {
+                            args.remove(0)
+                        };
+                        convert(arg)
                     }
                 } else {
-                    args.remove(0)
-                };
-                arg.into_string().map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))
-            }
-        } else {
-            println!("looking for {:?} in {:?}", key, args);
-            let eqthing = format!("{}=", key);
-            if let Some(i) = args.iter().position(|v| v == key || v.to_string_lossy().starts_with(&eqthing)) {
-                let thing = args.remove(i)
-                    .into_string()
-                    .map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))?;
-                println!("thing is {:?}", thing);
-                if thing == key {
-                    args.remove(i).into_string()
-                        .map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))
-                } else {
-                    Ok(thing.split_at(eqthing.len()).1.to_string())
+                    println!("looking for {:?} in {:?}", key, args);
+                    let eqthing = format!("{}=", key);
+                    if let Some(i) = args.iter().position(|v| v == key || v.to_string_lossy().starts_with(&eqthing)) {
+                        let thing = args.remove(i)
+                            .into_string()
+                            .map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))?;
+                        println!("thing is {:?}", thing);
+                        if thing == key {
+                            convert(args.remove(i))
+                        } else {
+                            convert(thing.split_at(eqthing.len()).1.into())
+                        }
+                    } else {
+                        Err(Error::MissingOption(key.to_string()))
+                    }
                 }
-            } else {
-                Err(Error::MissingOption(key.to_string()))
+            }
+            fn tiny_help_message(key: &'static str) -> String {
+                if key == "" {
+                    "STRING".to_string()
+                } else {
+                    format!("{} STRING", key)
+                }
             }
         }
-    }
-    fn tiny_help_message(key: &'static str) -> String {
-        if key == "" {
-            "STRING".to_string()
-        } else {
-            format!("{} STRING", key)
+
+        impl AutoArgs for Vec<$t> {
+            fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
+                              -> Result<Self, Error> {
+                let mut res: Self = Vec::new();
+                loop {
+                    match <$t>::parse_internal(key, args) {
+                        Ok(the_arg) => {
+                            res.push(the_arg);
+                        }
+                        Err(Error::MissingOption(_)) => {
+                            return Ok(res);
+                        }
+                        Err(e) => {
+                            return Err(e);
+                        }
+                    }
+                }
+            }
+            fn tiny_help_message(key: &'static str) -> String {
+                if key == "" {
+                    format!("{}...", $tyname)
+                } else {
+                    format!("{} {} ...", key, $tyname)
+                }
+            }
         }
     }
 }
 
-impl AutoArgs for Vec<String> {
-    fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
-                      -> Result<Self, Error> {
-        let mut res: Self = Vec::new();
-        loop {
-            match String::parse_internal(key, args) {
-                Ok(the_arg) => {
-                    res.push(the_arg);
-                }
-                Err(Error::MissingOption(_)) => {
-                    return Ok(res);
-                }
-                Err(e) => {
-                    return Err(e);
-                }
-            }
-        }
-    }
-    fn tiny_help_message(key: &'static str) -> String {
-        if key == "" {
-            "STRING...".to_string()
-        } else {
-            format!("{} STRING ...", key)
-        }
-    }
-}
+impl_from_osstr!(String, "STRING", |osstring: OsString| {
+    osstring.into_string().map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))
+});
+impl_from_osstr!(PathBuf, "PATH", |osstring: OsString| {
+    Ok(osstring.into())
+});
 
 macro_rules! impl_from {
     ($t:ty, $tyname:expr) => {
@@ -342,6 +354,14 @@ mod tests {
         let flags = &["--hello=3e13", "--goodbye", "2^10", "--bad"];
         should_parse(flags, "--hello", 3e13);
         should_parse(flags, "--goodbye", 1024.0);
+        shouldnt_parse::<String>(flags, "--helloo");
+        shouldnt_parse::<u32>(flags, "--hello");
+    }
+    #[test]
+    fn arg_pathbuf() {
+        let flags = &["--hello=3e13", "--goodbye", "2^10", "--bad"];
+        should_parse(flags, "--hello", PathBuf::from("3e13"));
+        should_parse(flags, "--goodbye", PathBuf::from("2^10"));
         shouldnt_parse::<String>(flags, "--helloo");
         shouldnt_parse::<u32>(flags, "--hello");
     }
