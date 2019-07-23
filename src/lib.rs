@@ -174,19 +174,94 @@ impl_from!(i32, "i32");
 impl_from!(i64, "i64");
 impl_from!(isize, "isize");
 
+impl AutoArgs for f64 {
+    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+                      -> Result<Self, Error> {
+        let the_arg = String::parse_internal(key, args)?;
+        meval::eval_str(the_arg)
+            .map_err(|e| Error::Pico(pico_args::Error::OptionValueParsingFailed(key, e.to_string())))
+    }
+    fn tiny_help_message(key: &'static str) -> String {
+        if key == "" {
+            "FLOAT".to_string()
+        } else {
+            format!("{} FLOAT", key)
+        }
+    }
+}
+
+impl AutoArgs for Vec<f64> {
+    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+                      -> Result<Self, Error> {
+        let mut res: Self = Vec::new();
+        loop {
+            match <f64>::parse_internal(key, args) {
+                Ok(val) => {
+                    res.push(val);
+                }
+                Err(Error::MissingOption(_)) => {
+                    return Ok(res);
+                }
+                Err(e) => {
+                    return Err(e);
+                }
+            }
+        }
+    }
+    fn tiny_help_message(key: &'static str) -> String {
+        format!("{} ...", f64::tiny_help_message(key))
+    }
+}
+impl AutoArgs for f32 {
+    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+                      -> Result<Self, Error> {
+        let the_arg = String::parse_internal(key, args)?;
+        meval::eval_str(the_arg)
+            .map(|v| v as f32)
+            .map_err(|e| Error::Pico(pico_args::Error::OptionValueParsingFailed(key, e.to_string())))
+    }
+    fn tiny_help_message(key: &'static str) -> String {
+        f64::tiny_help_message(key)
+    }
+}
+
+impl AutoArgs for Vec<f32> {
+    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+                      -> Result<Self, Error> {
+        let mut res: Self = Vec::new();
+        loop {
+            match <f32>::parse_internal(key, args) {
+                Ok(val) => {
+                    res.push(val);
+                }
+                Err(Error::MissingOption(_)) => {
+                    return Ok(res);
+                }
+                Err(e) => {
+                    return Err(e);
+                }
+            }
+        }
+    }
+    fn tiny_help_message(key: &'static str) -> String {
+        Vec::<f64>::tiny_help_message(key)
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn should_parse<T: Eq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
-                                                        key: &'static str,
-                                                        result: T) {
+    fn should_parse<T: PartialEq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
+                                                               key: &'static str,
+                                                               result: T) {
         let owned_args: Vec<String> = args.iter().map(|x| x.to_string()).collect();
         let mut args = pico_args::Arguments::from_args(owned_args);
         assert_eq!(T::parse_internal(key, &mut args).unwrap(), result);
     }
 
-    fn shouldnt_parse<T: Eq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
-                                                          key: &'static str) {
+    fn shouldnt_parse<T: PartialEq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
+                                                                 key: &'static str) {
         let owned_args: Vec<String> = args.iter().map(|x| x.to_string()).collect();
         let mut args = pico_args::Arguments::from_args(owned_args);
         assert!(T::parse_internal(key, &mut args).is_err());
@@ -235,6 +310,14 @@ mod tests {
         should_parse(flags, "--hello", -100008i32);
         should_parse(flags, "--hello", -100008i64);
         should_parse(flags, "--goodbye", 255i32);
+        shouldnt_parse::<String>(flags, "--helloo");
+        shouldnt_parse::<u32>(flags, "--hello");
+    }
+    #[test]
+    fn arg_f64() {
+        let flags = &["--hello=3e13", "--goodbye", "2^10", "--bad"];
+        should_parse(flags, "--hello", 3e13);
+        should_parse(flags, "--goodbye", 1024.0);
         shouldnt_parse::<String>(flags, "--helloo");
         shouldnt_parse::<u32>(flags, "--hello");
     }

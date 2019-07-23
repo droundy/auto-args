@@ -7,5 +7,6 @@ edition = "2018"
 [dependencies]
 pico-args = "0.1.0"
 auto-args-derive =  { path = "auto-args-derive", version = "0.1.0" }
+meval = "0.2.0"
 
 [workspace]
