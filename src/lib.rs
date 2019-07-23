@@ -3,6 +3,8 @@
 //! This crate enables you to create a command-line interface by
 //! defining a struct to hold your options.
 
+use std::ffi::OsString;
+
 /// The primary trait, which is implemented by any type which may be
 /// part of your command-line flags.
 pub trait AutoArgs: Sized {
@@ -10,7 +12,7 @@ pub trait AutoArgs: Sized {
     /// remaining arguments if it was successful.  Otherwise return an
     /// error message indicating what went wrong.  The `prefix` is
     /// a string that should be inserted prior to a flag name.
-    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments) -> Result<Self, Error>;
+    fn parse_internal(key: &'static str, args: &mut Vec<OsString>) -> Result<Self, Error>;
     /// Indicates whether this type requires any input.
     ///
     /// This is false if the data may be processed with no input, true
@@ -31,7 +33,13 @@ pub trait AutoArgs: Sized {
 #[derive(Clone, Debug)]
 pub enum Error {
     /// An error from pico-args.
-    Pico(pico_args::Error),
+    OptionValueParsingFailed(String, String),
+
+    /// A missing value from an option.
+    InvalidUTF8(String),
+
+    /// A missing value from an option.
+    OptionWithoutAValue(String),
 
     /// A missing required flag.
     MissingOption(String),
@@ -40,37 +48,55 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Error::Pico(e) => {
-                write!(f, "{}", e)
+            Error::OptionValueParsingFailed(key,e) => {
+                write!(f, "error parsing option '{}': {}", key, e)
             }
             Error::MissingOption(key) => {
                 write!(f, "the required '{}' option is missing", key)
+            }
+            Error::InvalidUTF8(e) => {
+                write!(f, "invalid UTF-8: '{}'", e)
+            }
+            Error::OptionWithoutAValue(key) => {
+                write!(f, "the option '{}' is missing a value", key)
             }
         }
     }
 }
 
 impl std::error::Error for Error {}
-impl From<pico_args::Error> for Error {
-    fn from(e: pico_args::Error) -> Self {
-        Error::Pico(e)
-    }
-}
 
 impl AutoArgs for String {
-    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments) -> Result<Self, Error> {
+    fn parse_internal(key: &'static str, args: &mut Vec<OsString>) -> Result<Self, Error> {
         if key == "" {
-            let copy = args.clone();
-            let free = copy.free()?;
-            if free.len() == 0 {
-                Err(Error::Pico(pico_args::Error::OptionWithoutAValue("")))
+            if args.len() == 0 {
+                Err(Error::OptionWithoutAValue("".to_string()))
             } else {
-                *args = pico_args::Arguments::from_args(free[1..].to_vec());
-                Ok(free[0].clone())
+                let arg = if args[0] == "--" {
+                    if args.len() > 1 {
+                        args.remove(1)
+                    } else {
+                        return Err(Error::OptionWithoutAValue("".to_string()));
+                    }
+                } else {
+                    args.remove(0)
+                };
+                arg.into_string().map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))
             }
         } else {
-            if let Some(a) = args.value_from_str(key)? {
-                Ok(a)
+            println!("looking for {:?} in {:?}", key, args);
+            let eqthing = format!("{}=", key);
+            if let Some(i) = args.iter().position(|v| v == key || v.to_string_lossy().starts_with(&eqthing)) {
+                let thing = args.remove(i)
+                    .into_string()
+                    .map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))?;
+                println!("thing is {:?}", thing);
+                if thing == key {
+                    args.remove(i).into_string()
+                        .map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))
+                } else {
+                    Ok(thing.split_at(eqthing.len()).1.to_string())
+                }
             } else {
                 Err(Error::MissingOption(key.to_string()))
             }
@@ -86,7 +112,7 @@ impl AutoArgs for String {
 }
 
 impl AutoArgs for Vec<String> {
-    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+    fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let mut res: Self = Vec::new();
         loop {
@@ -115,13 +141,13 @@ impl AutoArgs for Vec<String> {
 macro_rules! impl_from {
     ($t:ty, $tyname:expr) => {
         impl AutoArgs for $t {
-            fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+            fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
                               -> Result<Self, Error> {
                 use std::str::FromStr;
                 let the_arg = String::parse_internal(key, args)?;
                 match Self::from_str(&the_arg) {
                     Ok(val) => Ok(val),
-                    Err(e) => Err(Error::Pico(pico_args::Error::OptionValueParsingFailed(key, e.to_string()))),
+                    Err(e) => Err(Error::OptionValueParsingFailed(key.to_string(), e.to_string())),
                 }
             }
             fn tiny_help_message(key: &'static str) -> String {
@@ -134,7 +160,7 @@ macro_rules! impl_from {
         }
 
         impl AutoArgs for Vec<$t> {
-            fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+            fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
                               -> Result<Self, Error> {
                 let mut res: Self = Vec::new();
                 loop {
@@ -175,11 +201,11 @@ impl_from!(i64, "i64");
 impl_from!(isize, "isize");
 
 impl AutoArgs for f64 {
-    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+    fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let the_arg = String::parse_internal(key, args)?;
         meval::eval_str(the_arg)
-            .map_err(|e| Error::Pico(pico_args::Error::OptionValueParsingFailed(key, e.to_string())))
+            .map_err(|e| Error::OptionValueParsingFailed(key.to_string(), e.to_string()))
     }
     fn tiny_help_message(key: &'static str) -> String {
         if key == "" {
@@ -191,7 +217,7 @@ impl AutoArgs for f64 {
 }
 
 impl AutoArgs for Vec<f64> {
-    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+    fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let mut res: Self = Vec::new();
         loop {
@@ -213,12 +239,12 @@ impl AutoArgs for Vec<f64> {
     }
 }
 impl AutoArgs for f32 {
-    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+    fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let the_arg = String::parse_internal(key, args)?;
         meval::eval_str(the_arg)
             .map(|v| v as f32)
-            .map_err(|e| Error::Pico(pico_args::Error::OptionValueParsingFailed(key, e.to_string())))
+            .map_err(|e| Error::OptionValueParsingFailed(key.to_string(), e.to_string()))
     }
     fn tiny_help_message(key: &'static str) -> String {
         f64::tiny_help_message(key)
@@ -226,7 +252,7 @@ impl AutoArgs for f32 {
 }
 
 impl AutoArgs for Vec<f32> {
-    fn parse_internal(key: &'static str, args: &mut pico_args::Arguments)
+    fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let mut res: Self = Vec::new();
         loop {
@@ -255,15 +281,13 @@ mod tests {
     fn should_parse<T: PartialEq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
                                                                key: &'static str,
                                                                result: T) {
-        let owned_args: Vec<String> = args.iter().map(|x| x.to_string()).collect();
-        let mut args = pico_args::Arguments::from_args(owned_args);
+        let mut args: Vec<_> = args.iter().map(|s| OsString::from(s)).collect();
         assert_eq!(T::parse_internal(key, &mut args).unwrap(), result);
     }
 
     fn shouldnt_parse<T: PartialEq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
                                                                  key: &'static str) {
-        let owned_args: Vec<String> = args.iter().map(|x| x.to_string()).collect();
-        let mut args = pico_args::Arguments::from_args(owned_args);
+        let mut args: Vec<_> = args.iter().map(|s| OsString::from(s)).collect();
         assert!(T::parse_internal(key, &mut args).is_err());
     }
 
