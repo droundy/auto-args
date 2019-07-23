@@ -146,6 +146,16 @@ macro_rules! impl_from {
 }
 
 impl_from!(u8, "u8");
+impl_from!(u16, "u16");
+impl_from!(u32, "u32");
+impl_from!(u64, "u64");
+impl_from!(usize, "usize");
+
+impl_from!(i8, "i8");
+impl_from!(i16, "i16");
+impl_from!(i32, "i32");
+impl_from!(i64, "i64");
+impl_from!(isize, "isize");
 
 #[cfg(test)]
 mod tests {
@@ -184,5 +194,23 @@ mod tests {
         should_parse(flags, "--hello", 8u8);
         should_parse(flags, "--goodbye", 255u8);
         shouldnt_parse::<String>(flags, "--helloo");
+    }
+    #[test]
+    fn arg_i32() {
+        let flags = &["--hello", "-100008", "--goodbye", "255", "--bad"];
+        should_parse(flags, "--hello", -100008i32);
+        should_parse(flags, "--hello", -100008i64);
+        should_parse(flags, "--goodbye", 255i32);
+        shouldnt_parse::<String>(flags, "--helloo");
+        shouldnt_parse::<u32>(flags, "--hello");
+    }
+    #[test]
+    fn arg_equal_i32() {
+        let flags = &["--hello=-100008", "--goodbye", "255", "--bad"];
+        should_parse(flags, "--hello", -100008i32);
+        should_parse(flags, "--hello", -100008i64);
+        should_parse(flags, "--goodbye", 255i32);
+        shouldnt_parse::<String>(flags, "--helloo");
+        shouldnt_parse::<u32>(flags, "--hello");
     }
 }
