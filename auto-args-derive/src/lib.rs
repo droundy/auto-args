@@ -236,23 +236,18 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             if unnamed.unnamed.len() != 1 {
                 panic!("AutoArgs does not handle tuple structs with more than one field");
             }
-            let return_struct = return_with_fields(syn::Fields::Unnamed(unnamed.clone()),
-                                                   quote!(#name), false);
             let f = unnamed.unnamed.iter().next().expect("There should be a field here!");
             let mytype = f.ty.clone();
             quote!{
-                fn with_clap<AutoArgsT>(mut info: auto_args::ArgInfo,
-                                app: auto_args::clap::App,
-                                f: impl FnOnce(auto_args::clap::App) -> AutoArgsT)
-                                      -> AutoArgsT {
-                    let _name = info.name;
-                    f(app)
+                const REQUIRES_INPUT: bool =
+                    <#mytype as auto_args::AutoArgs>::REQUIRES_INPUT;
+                fn parse_internal(key: &str, args: &mut Vec<OsString>)
+                                  -> Result<Self, Error> {
+                    <#mytype as auto_args::AutoArgs>::parse_internal(key, args)
+                        .map(|x| #name(x))
                 }
-                fn from_clap<'a,'b>(_name: &str, _matches: &auto_args::clap::ArgMatches) -> Option<Self> {
-                    #return_struct
-                }
-                fn requires_flags(_name: &str) -> Vec<String> {
-                    <#mytype as auto_args::AutoArgs>::requires_flags(_name)
+                fn tiny_help_message(key: &str) -> String {
+                    "fixme".to_string()
                 }
             }
         },

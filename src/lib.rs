@@ -534,4 +534,11 @@ mod tests {
         assert!(String::REQUIRES_INPUT);
         assert!(!Option::<String>::REQUIRES_INPUT);
     }
+    #[derive(AutoArgs, PartialEq, Debug)]
+    struct TupleStruct(usize);
+    #[test]
+    fn tuple_struct() {
+        let flags = &["--foo", "5"];
+        should_parse_completely(flags, "--foo", TupleStruct(5));
+    }
 }
