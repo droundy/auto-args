@@ -154,7 +154,7 @@ fn create_join_prefix() -> proc_macro2::TokenStream {
 fn create_find_prefix() -> proc_macro2::TokenStream {
     quote!{
         match key.chars().next() {
-            None | Some('_') | Some('-') => "".to_string(),
+            None | Some('_') | Some('-') => "--".to_string(),
             _ => format!("{}-", key),
         }
     }

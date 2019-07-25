@@ -369,9 +369,15 @@ mod tests {
         shouldnt_parse::<String>(flags, "--helloo");
         shouldnt_parse::<u32>(flags, "--hello");
     }
-    #[derive(AutoArgs)]
+    #[derive(AutoArgs, PartialEq, Debug)]
     struct Test {
         a: String,
         b: String,
+    }
+    #[test]
+    fn derive_test() {
+        let flags = &["--a=foo", "--b", "bar"];
+        should_parse(flags, "", Test { a: "foo".to_string(), b: "bar".to_string() });
+        shouldnt_parse::<String>(flags, "--helloo");
     }
 }
