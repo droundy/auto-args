@@ -369,38 +369,48 @@ mod tests {
         shouldnt_parse::<String>(flags, "--helloo");
         shouldnt_parse::<u32>(flags, "--hello");
     }
-    #[derive(AutoArgs, PartialEq, Debug)]
-    struct Test {
-        a: String,
-        b: String,
-    }
-    #[test]
-    fn derive_test() {
-        println!("help:\n{}", Test::help_message("", "this is the help"));
-        println!("help prefix --foo:\n{}", Test::help_message("--foo", "this is the help"));
-        let flags = &["--a=foo", "--b", "bar"];
-        should_parse(flags, "", Test { a: "foo".to_string(), b: "bar".to_string() });
-        shouldnt_parse::<String>(flags, "--helloo");
+    // #[derive(AutoArgs, PartialEq, Debug)]
+    // struct Test {
+    //     a: String,
+    //     b: String,
+    // }
+    // #[test]
+    // fn derive_test() {
+    //     println!("help:\n{}", Test::help_message("", "this is the help"));
+    //     println!("help prefix --foo:\n{}", Test::help_message("--foo", "this is the help"));
+    //     let flags = &["--a=foo", "--b", "bar"];
+    //     should_parse(flags, "", Test { a: "foo".to_string(), b: "bar".to_string() });
+    //     shouldnt_parse::<String>(flags, "--helloo");
 
-        let foo_flags = &["--foo-a=foo", "--foo-b", "bar"];
-        should_parse(foo_flags, "--foo",
-                     Test { a: "foo".to_string(), b: "bar".to_string() });
-        shouldnt_parse::<Test>(foo_flags, "");
-    }
+    //     let foo_flags = &["--foo-a=foo", "--foo-b", "bar"];
+    //     should_parse(foo_flags, "--foo",
+    //                  Test { a: "foo".to_string(), b: "bar".to_string() });
+    //     shouldnt_parse::<Test>(foo_flags, "");
+    // }
+    // #[derive(AutoArgs, PartialEq, Debug)]
+    // struct Pair<T> {
+    //     first: T,
+    //     second: T,
+    // }
+    // #[test]
+    // fn derive_test_pair() {
+    //     println!("help:\n{}", Pair::<Test>::help_message("", "this is the help"));
+    //     let flags = &["--first-a=a1", "--first-b", "b1",
+    //                   "--second-a", "a2", "--second-b", "b2"];
+    //     should_parse(flags, "", Pair {
+    //         first: Test { a: "a1".to_string(), b: "b1".to_string() },
+    //         second: Test { a: "a2".to_string(), b: "b2".to_string() },
+    //     });
+    //     shouldnt_parse::<String>(flags, "--helloo");
+    // }
     #[derive(AutoArgs, PartialEq, Debug)]
-    struct Pair<T> {
-        first: T,
-        second: T,
+    enum Either {
+        Left(u8),
+        Right(u16),
     }
     #[test]
-    fn derive_test_pair() {
-        println!("help:\n{}", Pair::<Test>::help_message("", "this is the help"));
-        let flags = &["--first-a=a1", "--first-b", "b1",
-                      "--second-a", "a2", "--second-b", "b2"];
-        should_parse(flags, "", Pair {
-            first: Test { a: "a1".to_string(), b: "b1".to_string() },
-            second: Test { a: "a2".to_string(), b: "b2".to_string() },
-        });
-        shouldnt_parse::<String>(flags, "--helloo");
+    fn derive_either() {
+        let flags = &["--left", "37"];
+        should_parse(flags, "", Either::Left(37));
     }
 }

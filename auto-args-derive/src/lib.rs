@@ -129,7 +129,9 @@ fn return_with_fields(f: syn::Fields,
             let f = unnamed.unnamed.iter().next().expect("we should have one field");
             let mytype = f.ty.clone();
             quote!{
-                return Ok( #name(<#mytype as auto_args::AutoArgs>::parse_internal(&_name, args)? ) );
+                if let Ok(x) = <#mytype as auto_args::AutoArgs>::parse_internal(&_prefix, args) {
+                    return Ok(#name(x));
+                }
             }
         },
         _ => {
@@ -262,69 +264,26 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             });
             let find_prefix = create_find_prefix();
             let s = quote! {
-                fn with_clap<AutoArgsT>(mut info: auto_args::ArgInfo,
-                                app: auto_args::clap::App,
-                                f: impl FnOnce(auto_args::clap::App) -> AutoArgsT)
-                                -> AutoArgsT {
-                    let _name = info.name;
-                    let find_prefix = #find_prefix;
-                    let _prefix = find_prefix(_name);
-                    let orig_prefix = _prefix.clone();
-                    let join_prefix = #join_prefix;
-                    info.multiple = false;
+                fn parse_internal(key: &str, args: &mut Vec<OsString>)
+                                  -> Result<Self, Error>
+                {
+                    let _prefix = #find_prefix;
 
-                    let mut conflicts: Vec<String> = Vec::new();
                     #(
-                        let _name = join_prefix(&orig_prefix, #vnames3);
-                        let _prefix = find_prefix(&join_prefix(&orig_prefix, #vnames4));
-                        conflicts.push(#one_field2);
-                    )*
-
-                    let original_conflicted = info.conflicted_flags.clone();
-                    let original_required_unless = info.required_unless_one.clone();
-                    let am_required = info.required || original_required_unless.len() > 0;
-                    info.required = #only_one_variant && am_required;
-                    #(
-                        let _name = join_prefix(&orig_prefix, #vnames);
-                        let _prefix = find_prefix(&join_prefix(&orig_prefix, #vnames2));
-                        let myself = #one_field3;
-                        info.required_unless_one = original_required_unless.clone();
-                        info.conflicted_flags = original_conflicted.clone();
-                        conflicts.iter().filter(|s| **s != myself).map(|s| {
-                            info.conflicted_flags.push(s.clone());
-                            if am_required {
-                                info.required_unless_one.push(s.clone());
-                            }
-                        }).count();
-                        // println!("required_unless_one is {:?} for {:?} with {:?} and conflicted {:?}",
-                        //          info.required_unless_one, _name, info.required, info.conflicted_flags);
-
-                    )*
-                    f(app)
-                }
-                fn from_clap<'a,'b>(_name: &str, _matches: &auto_args::clap::ArgMatches) -> Option<Self> {
-                    let find_prefix = #find_prefix;
-                    let _prefix = find_prefix(_name);
-                    let orig_prefix = _prefix;
-                    let _join_prefix = #join_prefix;
-                    #(
-                        let _name = _join_prefix(&orig_prefix, #vnames5);
-                        let _prefix = find_prefix(&_join_prefix(&orig_prefix, #vnames6));
-                        // println!("this is good: {:?} and {:?}", &name, &_prefix);
-                        if _matches.is_present(#one_field) {
+                        {
+                            let variant = #vnames;
+                            let _prefix = match _prefix.chars().next() {
+                                None | Some('_') | Some('-') => format!("--{}", variant),
+                                _ => format!("{}-{}", _prefix, variant),
+                            };
                             #return_enum
                         }
+
                     )*
-                    panic!("Some version of the enum should be present!")
+                    Err(auto_args::Error::MissingOption("a missing thing".to_string()))
                 }
-                fn requires_flags(_name: &str) -> Vec<String> {
-                    // This is a little hokey, but we just list an
-                    // enum as having no required flags.  That is an
-                    // understatement, but I don't know how to use
-                    // clap to specify a set of flags as a
-                    // requirement.  One would hope an ArgGroup would
-                    // achieve this, but I don't think it does.
-                    Vec::new()
+                fn tiny_help_message(key: &str) -> String {
+                    "fixme".to_string()
                 }
             };
             s
