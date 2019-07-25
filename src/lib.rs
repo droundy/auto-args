@@ -404,14 +404,14 @@ mod tests {
     //     shouldnt_parse::<String>(flags, "--helloo");
     // }
     #[derive(AutoArgs, PartialEq, Debug)]
-    enum Either {
-        Left(u8),
-        Right(u16),
+    enum Either<A,B> {
+        Left(A),
+        Right(B),
     }
     #[test]
     fn derive_either() {
         let flags = &["--left", "37"];
-        should_parse(flags, "", Either::Left(37));
+        should_parse(flags, "", Either::<u8,u16>::Left(37u8));
     }
     #[test]
     fn derive_pair_either() {
@@ -420,5 +420,10 @@ mod tests {
             first: Either::Left(37),
             second: Either::Right(3),
         });
+    }
+    #[test]
+    fn derive_either_either() {
+        let flags = &["--right-left", "37"];
+        should_parse(flags, "", Either::<u32,Either<u8,u16>>::Right(Either::Left(37)));
     }
 }
