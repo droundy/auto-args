@@ -147,8 +147,10 @@ fn create_join_prefix() -> proc_macro2::TokenStream {
                 let mut x = _prefix.to_string();
                 x.pop();
                 x
-            } else {
+            } else if _prefix.chars().last() == Some('-') {
                 format!("{}{}", _prefix, name)
+            } else {
+                format!("{}-{}", _prefix, name)
             }
         }
     }
