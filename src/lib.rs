@@ -450,6 +450,8 @@ mod tests {
             second: Test { a: "a2".to_string(), b: "b2".to_string() },
         });
         shouldnt_parse::<String>(flags, "--helloo");
+        assert!(!Pair::<Option<String>>::REQUIRES_INPUT);
+        assert!(Pair::<String>::REQUIRES_INPUT);
     }
     #[derive(AutoArgs, PartialEq, Debug)]
     enum Either<A,B> {
