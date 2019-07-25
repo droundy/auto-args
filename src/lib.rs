@@ -20,11 +20,8 @@ pub trait AutoArgs: Sized {
     /// Indicates whether this type requires any input.
     ///
     /// This is false if the data may be processed with no input, true
-    /// otherwise.  There is a default implementation of `false` for
-    /// convenience, since this is the "safe" answer.
-    fn requires_input() -> bool {
-        false
-    }
+    /// otherwise.
+    const REQUIRES_INPUT: bool;
     /// Return a tiny  help message.
     fn tiny_help_message(key: &str) -> String;
     /// Return a help message.
@@ -73,6 +70,7 @@ impl std::error::Error for Error {}
 macro_rules! impl_from_osstr {
     ($t:ty, $tyname:expr, $conv:expr) => {
         impl AutoArgs for $t {
+            const REQUIRES_INPUT: bool = true;
             fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
                 let convert = $conv;
                 if key == "" {
@@ -118,6 +116,7 @@ macro_rules! impl_from_osstr {
         }
 
         impl AutoArgs for Vec<$t> {
+            const REQUIRES_INPUT: bool = false;
             fn parse_internal(key: &str, args: &mut Vec<OsString>)
                               -> Result<Self, Error> {
                 let mut res: Self = Vec::new();
@@ -153,9 +152,53 @@ impl_from_osstr!(PathBuf, "PATH", |osstring: OsString| {
     Ok(osstring.into())
 });
 
+impl AutoArgs for bool {
+    const REQUIRES_INPUT: bool = false;
+    fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
+        if key == "" {
+            if args.len() == 0 {
+                Err(Error::OptionWithoutAValue("".to_string()))
+            } else {
+                if args[0] == "--" {
+                    return Err(Error::OptionWithoutAValue("bool".to_string()));
+                }
+                let arg = args.remove(0);
+                if arg == "false" {
+                    Ok(false)
+                } else if arg == "true" {
+                    Ok(true)
+                } else {
+                    Err(Error::MissingOption("bool".to_string()))
+                }
+            }
+        } else {
+            println!("looking for {:?} in {:?}", key, args);
+            Ok(args.iter().filter(|v| v.to_string_lossy() == key).next().is_some())
+        }
+    }
+    fn tiny_help_message(key: &str) -> String {
+        if key == "" {
+            "STRING".to_string()
+        } else {
+            format!("{} STRING", key)
+        }
+    }
+}
+
+impl<T: AutoArgs> AutoArgs for Option<T> {
+    const REQUIRES_INPUT: bool = false;
+    fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
+        Ok(T::parse_internal(key, args).ok())
+    }
+    fn tiny_help_message(key: &str) -> String {
+        format!("[{}]", T::tiny_help_message(key))
+    }
+}
+
 macro_rules! impl_from {
     ($t:ty, $tyname:expr) => {
         impl AutoArgs for $t {
+            const REQUIRES_INPUT: bool = true;
             fn parse_internal(key: &str, args: &mut Vec<OsString>)
                               -> Result<Self, Error> {
                 use std::str::FromStr;
@@ -175,6 +218,7 @@ macro_rules! impl_from {
         }
 
         impl AutoArgs for Vec<$t> {
+            const REQUIRES_INPUT: bool = false;
             fn parse_internal(key: &str, args: &mut Vec<OsString>)
                               -> Result<Self, Error> {
                 let mut res: Self = Vec::new();
@@ -216,6 +260,7 @@ impl_from!(i64, "i64");
 impl_from!(isize, "isize");
 
 impl AutoArgs for f64 {
+    const REQUIRES_INPUT: bool = true;
     fn parse_internal(key: &str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let the_arg = String::parse_internal(key, args)?;
@@ -232,6 +277,7 @@ impl AutoArgs for f64 {
 }
 
 impl AutoArgs for Vec<f64> {
+    const REQUIRES_INPUT: bool = false;
     fn parse_internal(key: &str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let mut res: Self = Vec::new();
@@ -254,6 +300,7 @@ impl AutoArgs for Vec<f64> {
     }
 }
 impl AutoArgs for f32 {
+    const REQUIRES_INPUT: bool = true;
     fn parse_internal(key: &str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let the_arg = String::parse_internal(key, args)?;
@@ -267,6 +314,7 @@ impl AutoArgs for f32 {
 }
 
 impl AutoArgs for Vec<f32> {
+    const REQUIRES_INPUT: bool = false;
     fn parse_internal(key: &str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let mut res: Self = Vec::new();
@@ -443,5 +491,13 @@ mod tests {
             foo: "good".to_string(),
             bar: 7,
         });
+    }
+    #[test]
+    fn option() {
+        let flags = &["--foo", "good"];
+        should_parse(flags, "--foo", Some("good".to_string()));
+        should_parse(flags, "--bar", Option::<String>::None);
+        assert!(String::REQUIRES_INPUT);
+        assert!(!Option::<String>::REQUIRES_INPUT);
     }
 }

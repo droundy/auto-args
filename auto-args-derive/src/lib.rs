@@ -185,6 +185,8 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             let return_struct = return_with_fields(syn::Fields::Named(fields.clone()),
                                                    quote!(#name));
             quote!{
+                const REQUIRES_INPUT: bool = #(
+                    <#types3 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false;
                 fn parse_internal(key: &str, args: &mut Vec<OsString>)
                                   -> Result<Self, Error> {
                     let _prefix = #find_prefix;
@@ -266,6 +268,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             });
             let find_prefix = create_find_prefix();
             let s = quote! {
+                const REQUIRES_INPUT: bool = true;
                 fn parse_internal(key: &str, args: &mut Vec<OsString>)
                                   -> Result<Self, Error>
                 {
