@@ -387,11 +387,11 @@ mod tests {
     //                  Test { a: "foo".to_string(), b: "bar".to_string() });
     //     shouldnt_parse::<Test>(foo_flags, "");
     // }
-    // #[derive(AutoArgs, PartialEq, Debug)]
-    // struct Pair<T> {
-    //     first: T,
-    //     second: T,
-    // }
+    #[derive(AutoArgs, PartialEq, Debug)]
+    struct Pair<T> {
+        first: T,
+        second: T,
+    }
     // #[test]
     // fn derive_test_pair() {
     //     println!("help:\n{}", Pair::<Test>::help_message("", "this is the help"));
@@ -412,5 +412,13 @@ mod tests {
     fn derive_either() {
         let flags = &["--left", "37"];
         should_parse(flags, "", Either::Left(37));
+    }
+    #[test]
+    fn derive_pair_either() {
+        let flags = &["--first-left", "37", "--second-right", "3"];
+        should_parse(flags, "", Pair {
+            first: Either::Left(37),
+            second: Either::Right(3),
+        });
     }
 }
