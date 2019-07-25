@@ -97,7 +97,11 @@ macro_rules! impl_from_osstr {
                             .map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))?;
                         println!("thing is {:?}", thing);
                         if thing == key {
-                            convert(args.remove(i))
+                            if args.len() > i {
+                                convert(args.remove(i))
+                            } else {
+                                Err(Error::OptionWithoutAValue(key.to_string()))
+                            }
                         } else {
                             convert(thing.split_at(eqthing.len()).1.into())
                         }
@@ -348,6 +352,16 @@ mod tests {
         let mut args: Vec<_> = args.iter().map(|s| OsString::from(s)).collect();
         assert_eq!(T::parse_internal(key, &mut args).unwrap(), result);
     }
+    fn should_parse_completely<T: PartialEq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
+                                                               key: &'static str,
+                                                               result: T) {
+        let mut args: Vec<_> = args.iter().map(|s| OsString::from(s)).collect();
+        assert_eq!(T::parse_internal(key, &mut args).unwrap(), result);
+        if args.len() != 0 {
+            println!("args remaining: {:?}", args);
+            assert_eq!(args.len(), 0);
+        }
+    }
 
     fn shouldnt_parse<T: PartialEq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
                                                                  key: &'static str) {
@@ -359,9 +373,13 @@ mod tests {
     fn hello_world() {
         let flags = &["--hello", "world", "--bad"];
         should_parse(flags, "--hello", "world".to_string());
-        should_parse(flags, "--hello", "world".to_string());
         shouldnt_parse::<String>(flags, "--helloo");
         shouldnt_parse::<u8>(flags, "--hello");
+    }
+    #[test]
+    fn hello_world_complete() {
+        let flags = &["--hello", "world"];
+        should_parse_completely(flags, "--hello", "world".to_string());
     }
     #[test]
     fn hello_list() {
@@ -427,12 +445,12 @@ mod tests {
         println!("help:\n{}", Test::help_message("", "this is the help"));
         println!("help prefix --foo:\n{}", Test::help_message("--foo", "this is the help"));
         let flags = &["--a=foo", "--b", "bar"];
-        should_parse(flags, "", Test { a: "foo".to_string(), b: "bar".to_string() });
+        should_parse_completely(flags, "", Test { a: "foo".to_string(), b: "bar".to_string() });
         shouldnt_parse::<String>(flags, "--helloo");
 
         let foo_flags = &["--foo-a=foo", "--foo-b", "bar"];
-        should_parse(foo_flags, "--foo",
-                     Test { a: "foo".to_string(), b: "bar".to_string() });
+        should_parse_completely(foo_flags, "--foo",
+                                Test { a: "foo".to_string(), b: "bar".to_string() });
         shouldnt_parse::<Test>(foo_flags, "");
     }
     #[derive(AutoArgs, PartialEq, Debug)]
@@ -445,7 +463,7 @@ mod tests {
         println!("help:\n{}", Pair::<Test>::help_message("", "this is the help"));
         let flags = &["--first-a=a1", "--first-b", "b1",
                       "--second-a", "a2", "--second-b", "b2"];
-        should_parse(flags, "", Pair {
+        should_parse_completely(flags, "", Pair {
             first: Test { a: "a1".to_string(), b: "b1".to_string() },
             second: Test { a: "a2".to_string(), b: "b2".to_string() },
         });
@@ -461,12 +479,12 @@ mod tests {
     #[test]
     fn derive_either() {
         let flags = &["--left", "37"];
-        should_parse(flags, "", Either::<u8,u16>::Left(37u8));
+        should_parse_completely(flags, "", Either::<u8,u16>::Left(37u8));
     }
     #[test]
     fn derive_pair_either() {
         let flags = &["--first-left", "37", "--second-right", "3"];
-        should_parse(flags, "", Pair {
+        should_parse_completely(flags, "", Pair {
             first: Either::Left(37),
             second: Either::Right(3),
         });
@@ -474,7 +492,21 @@ mod tests {
     #[test]
     fn derive_either_either() {
         let flags = &["--right-left", "37"];
-        should_parse(flags, "", Either::<u32,Either<u8,u16>>::Right(Either::Left(37)));
+        should_parse_completely(flags, "", Either::<u32,Either<u8,u16>>::Right(Either::Left(37)));
+    }
+    #[test]
+    fn derive_either_option() {
+        let flags = &["--right-left", "7"];
+        should_parse_completely(flags, "",
+                                Either::<u32,Either<u8,Option<u32>>>::Right(Either::Left(7)));
+
+        let flags = &["--right-right"];
+        should_parse_completely(flags, "",
+                                Either::<u32,Either<u8,Option<u32>>>::Right(Either::Right(None)));
+
+        let flags = &["--right-right", "5"];
+        should_parse_completely(flags, "",
+                                Either::<u32,Either<u8,Option<u32>>>::Right(Either::Right(Some(5))));
     }
     #[derive(AutoArgs, PartialEq, Debug)]
     enum MyEnum {

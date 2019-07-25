@@ -105,14 +105,27 @@ fn one_field_name(f: syn::Fields) -> proc_macro2::TokenStream {
 }
 
 fn return_with_fields(f: syn::Fields,
-                      name: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+                      name: proc_macro2::TokenStream,
+                      am_enum_variant: bool) -> proc_macro2::TokenStream {
     let join_prefix = create_join_prefix();
     match f {
         syn::Fields::Named(ref fields) => {
             let f: Vec<_> = fields.named.clone().into_iter().collect();
             let names = f.iter().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
             let types = f.iter().map(|x| x.ty.clone());
+            let types2 = types.clone();
             let idents = f.iter().map(|x| x.ident.clone().unwrap());
+            let check_main_flag = if am_enum_variant {
+                quote!{
+                    if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
+                        // Nothing special to do, something below requires input.
+                    } else if !bool::parse_internal(&_prefix, args)? {
+                        return Err(auto_args::Error::MissingOption(key.to_string()))
+                    }
+                }
+            } else {
+                quote!{}
+            };
             quote! {
                 let join_prefix = #join_prefix;
                 return Ok( #name {
@@ -183,7 +196,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             let types3 = f.iter().rev().map(|x| x.ty.clone());
             let names3 = f.iter().rev().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
             let return_struct = return_with_fields(syn::Fields::Named(fields.clone()),
-                                                   quote!(#name));
+                                                   quote!(#name), false);
             quote!{
                 const REQUIRES_INPUT: bool = #(
                     <#types3 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false;
@@ -224,7 +237,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 panic!("AutoArgs does not handle tuple structs with more than one field");
             }
             let return_struct = return_with_fields(syn::Fields::Unnamed(unnamed.clone()),
-                                                   quote!(#name));
+                                                   quote!(#name), false);
             let f = unnamed.unnamed.iter().next().expect("There should be a field here!");
             let mytype = f.ty.clone();
             quote!{
@@ -264,7 +277,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             let one_field3 = one_field.clone();
             let return_enum = v.iter().map(|v| {
                 let variant_name = v.ident.clone();
-                return_with_fields(v.fields.clone(), quote!(#name::#variant_name))
+                return_with_fields(v.fields.clone(), quote!(#name::#variant_name), true)
             });
             let find_prefix = create_find_prefix();
             let s = quote! {
