@@ -3,5 +3,16 @@ name = "auto-args-derive"
 version = "0.1.0"
 authors = ["David Roundy <daveroundy@gmail.com>"]
 edition = "2018"
+description = "Parse command line arguments by defining a struct, derive crate."
+repository = "https://github.com/daveroundy/auto-args"
+keywords = ["args", "derive"]
+categories = ["command-line-interface"]
+license = "Apache-2.0/MIT"
 
 [dependencies]
+syn = "0.15"
+quote = "0.6"
+proc-macro2 = "0.4"
+
+[lib]
+proc-macro = true

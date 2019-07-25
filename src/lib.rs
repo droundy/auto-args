@@ -6,6 +6,9 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
 
+#[doc(hidden)]
+pub use auto_args_derive::*;
+
 /// The primary trait, which is implemented by any type which may be
 /// part of your command-line flags.
 pub trait AutoArgs: Sized {
@@ -13,7 +16,7 @@ pub trait AutoArgs: Sized {
     /// remaining arguments if it was successful.  Otherwise return an
     /// error message indicating what went wrong.  The `prefix` is
     /// a string that should be inserted prior to a flag name.
-    fn parse_internal(key: &'static str, args: &mut Vec<OsString>) -> Result<Self, Error>;
+    fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error>;
     /// Indicates whether this type requires any input.
     ///
     /// This is false if the data may be processed with no input, true
@@ -23,9 +26,9 @@ pub trait AutoArgs: Sized {
         false
     }
     /// Return a tiny  help message.
-    fn tiny_help_message(key: &'static str) -> String;
+    fn tiny_help_message(key: &str) -> String;
     /// Return a help message.
-    fn help_message(key: &'static str, doc: &'static str) -> String {
+    fn help_message(key: &str, doc: &str) -> String {
         format!("    {}  {}", Self::tiny_help_message(key), doc)
     }
 }
@@ -70,7 +73,7 @@ impl std::error::Error for Error {}
 macro_rules! impl_from_osstr {
     ($t:ty, $tyname:expr, $conv:expr) => {
         impl AutoArgs for $t {
-            fn parse_internal(key: &'static str, args: &mut Vec<OsString>) -> Result<Self, Error> {
+            fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
                 let convert = $conv;
                 if key == "" {
                     if args.len() == 0 {
@@ -105,7 +108,7 @@ macro_rules! impl_from_osstr {
                     }
                 }
             }
-            fn tiny_help_message(key: &'static str) -> String {
+            fn tiny_help_message(key: &str) -> String {
                 if key == "" {
                     "STRING".to_string()
                 } else {
@@ -115,7 +118,7 @@ macro_rules! impl_from_osstr {
         }
 
         impl AutoArgs for Vec<$t> {
-            fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
+            fn parse_internal(key: &str, args: &mut Vec<OsString>)
                               -> Result<Self, Error> {
                 let mut res: Self = Vec::new();
                 loop {
@@ -132,7 +135,7 @@ macro_rules! impl_from_osstr {
                     }
                 }
             }
-            fn tiny_help_message(key: &'static str) -> String {
+            fn tiny_help_message(key: &str) -> String {
                 if key == "" {
                     format!("{}...", $tyname)
                 } else {
@@ -153,7 +156,7 @@ impl_from_osstr!(PathBuf, "PATH", |osstring: OsString| {
 macro_rules! impl_from {
     ($t:ty, $tyname:expr) => {
         impl AutoArgs for $t {
-            fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
+            fn parse_internal(key: &str, args: &mut Vec<OsString>)
                               -> Result<Self, Error> {
                 use std::str::FromStr;
                 let the_arg = String::parse_internal(key, args)?;
@@ -162,7 +165,7 @@ macro_rules! impl_from {
                     Err(e) => Err(Error::OptionValueParsingFailed(key.to_string(), e.to_string())),
                 }
             }
-            fn tiny_help_message(key: &'static str) -> String {
+            fn tiny_help_message(key: &str) -> String {
                 if key == "" {
                     $tyname.to_string()
                 } else {
@@ -172,7 +175,7 @@ macro_rules! impl_from {
         }
 
         impl AutoArgs for Vec<$t> {
-            fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
+            fn parse_internal(key: &str, args: &mut Vec<OsString>)
                               -> Result<Self, Error> {
                 let mut res: Self = Vec::new();
                 loop {
@@ -189,7 +192,7 @@ macro_rules! impl_from {
                     }
                 }
             }
-            fn tiny_help_message(key: &'static str) -> String {
+            fn tiny_help_message(key: &str) -> String {
                 if key == "" {
                     format!("{}...", $tyname.to_string())
                 } else {
@@ -213,13 +216,13 @@ impl_from!(i64, "i64");
 impl_from!(isize, "isize");
 
 impl AutoArgs for f64 {
-    fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
+    fn parse_internal(key: &str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let the_arg = String::parse_internal(key, args)?;
         meval::eval_str(the_arg)
             .map_err(|e| Error::OptionValueParsingFailed(key.to_string(), e.to_string()))
     }
-    fn tiny_help_message(key: &'static str) -> String {
+    fn tiny_help_message(key: &str) -> String {
         if key == "" {
             "FLOAT".to_string()
         } else {
@@ -229,7 +232,7 @@ impl AutoArgs for f64 {
 }
 
 impl AutoArgs for Vec<f64> {
-    fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
+    fn parse_internal(key: &str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let mut res: Self = Vec::new();
         loop {
@@ -246,25 +249,25 @@ impl AutoArgs for Vec<f64> {
             }
         }
     }
-    fn tiny_help_message(key: &'static str) -> String {
+    fn tiny_help_message(key: &str) -> String {
         format!("{} ...", f64::tiny_help_message(key))
     }
 }
 impl AutoArgs for f32 {
-    fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
+    fn parse_internal(key: &str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let the_arg = String::parse_internal(key, args)?;
         meval::eval_str(the_arg)
             .map(|v| v as f32)
             .map_err(|e| Error::OptionValueParsingFailed(key.to_string(), e.to_string()))
     }
-    fn tiny_help_message(key: &'static str) -> String {
+    fn tiny_help_message(key: &str) -> String {
         f64::tiny_help_message(key)
     }
 }
 
 impl AutoArgs for Vec<f32> {
-    fn parse_internal(key: &'static str, args: &mut Vec<OsString>)
+    fn parse_internal(key: &str, args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         let mut res: Self = Vec::new();
         loop {
@@ -281,7 +284,7 @@ impl AutoArgs for Vec<f32> {
             }
         }
     }
-    fn tiny_help_message(key: &'static str) -> String {
+    fn tiny_help_message(key: &str) -> String {
         Vec::<f64>::tiny_help_message(key)
     }
 }
@@ -290,6 +293,7 @@ impl AutoArgs for Vec<f32> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate as auto_args;
     fn should_parse<T: PartialEq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
                                                                key: &'static str,
                                                                result: T) {
@@ -364,5 +368,10 @@ mod tests {
         should_parse(flags, "--goodbye", PathBuf::from("2^10"));
         shouldnt_parse::<String>(flags, "--helloo");
         shouldnt_parse::<u32>(flags, "--hello");
+    }
+    #[derive(AutoArgs)]
+    struct Test {
+        a: String,
+        b: String,
     }
 }
