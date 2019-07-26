@@ -200,8 +200,8 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             quote!{
                 const REQUIRES_INPUT: bool = #(
                     <#types3 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false;
-                fn parse_internal(key: &str, args: &mut Vec<OsString>)
-                                  -> Result<Self, Error> {
+                fn parse_internal(key: &str, args: &mut Vec<std::ffi::OsString>)
+                                  -> Result<Self, auto_args::Error> {
                     let _prefix = #find_prefix;
                     #return_struct
                 }
@@ -241,8 +241,8 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             quote!{
                 const REQUIRES_INPUT: bool =
                     <#mytype as auto_args::AutoArgs>::REQUIRES_INPUT;
-                fn parse_internal(key: &str, args: &mut Vec<OsString>)
-                                  -> Result<Self, Error> {
+                fn parse_internal(key: &str, args: &mut Vec<std::ffi::OsString>)
+                                  -> Result<Self, auto_args::Error> {
                     <#mytype as auto_args::AutoArgs>::parse_internal(key, args)
                         .map(|x| #name(x))
                 }
@@ -277,8 +277,8 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             let find_prefix = create_find_prefix();
             let s = quote! {
                 const REQUIRES_INPUT: bool = true;
-                fn parse_internal(key: &str, args: &mut Vec<OsString>)
-                                  -> Result<Self, Error>
+                fn parse_internal(key: &str, args: &mut Vec<std::ffi::OsString>)
+                                  -> Result<Self, auto_args::Error>
                 {
                     let _prefix = match key.chars().next() {
                         None | Some('_') => "--".to_string(),
