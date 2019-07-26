@@ -12,12 +12,30 @@ pub use auto_args_derive::*;
 /// The primary trait, which is implemented by any type which may be
 /// part of your command-line flags.
 pub trait AutoArgs: Sized {
+    /// Parse the command-line arguments, exiting in case of error.
+    ///
+    /// This is what users actually use.
+    fn parse_args() -> Self {
+        let mut v: Vec<_> = std::env::args_os().collect();
+        v.remove(0);
+        if v.iter().any(|v| v == "--help") {
+            println!("{}", Self::usage());
+            std::process::exit(0);
+        }
+        match Self::parse_vec(v) {
+            Ok(val) => val,
+            Err(e) => {
+                println!("error: {}\n", e);
+                println!("{}", Self::usage());
+                std::process::exit(1)
+            }
+        }
+    }
     /// Parse a `Vec` of arguments as if they were command line flags
     ///
     /// This mimics what we would do if we were doing the real
     /// parsing, except that we don't exit on error.
-    fn parse_vec(args: &[OsString]) -> Result<Self, Error> {
-        let mut args = args.to_vec();
+    fn parse_vec(mut args: Vec<OsString>) -> Result<Self, Error> {
         let v = Self::parse_internal("", &mut args)?;
         if args.len() > 0 {
             Err(Error::UnexpectedOption(format!("{:?}", args)))
@@ -42,6 +60,27 @@ pub trait AutoArgs: Sized {
     /// Return a help message.
     fn help_message(key: &str, doc: &str) -> String {
         format!("    {}  {}", Self::tiny_help_message(key), doc)
+    }
+    /// Usage text for the actual command
+    fn usage() -> String {
+        format!("USAGE:
+    {} {}
+
+For more information try --help",
+                std::env::args_os().next().unwrap().to_string_lossy(),
+                Self::tiny_help_message(""))
+    }
+    /// Help text for the actual command
+    fn help() -> String {
+        format!("USAGE:
+    {} {}
+
+{}
+
+For more information try --help",
+                std::env::args_os().next().unwrap().to_string_lossy(),
+                Self::tiny_help_message(""),
+                Self::help_message("", ""))
     }
 }
 
