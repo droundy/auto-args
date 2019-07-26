@@ -12,6 +12,21 @@ pub use auto_args_derive::*;
 /// The primary trait, which is implemented by any type which may be
 /// part of your command-line flags.
 pub trait AutoArgs: Sized {
+    /// Parse a `Vec` of arguments as if they were command line flags
+    ///
+    /// This mimics what we would do if we were doing the real
+    /// parsing, except that we don't exit on error.
+    fn parse_vec(args: &[OsString]) -> Result<Self, Error> {
+        let mut args = args.to_vec();
+        let v = Self::parse_internal("", &mut args)?;
+        if args.len() > 0 {
+            Err(Error::UnexpectedOption(format!("{:?}", args)))
+        } else {
+            Ok(v)
+        }
+    }
+    /// For implementation, but not for using this library.
+    ///
     /// Parse this flag from the arguments, and return the set of
     /// remaining arguments if it was successful.  Otherwise return an
     /// error message indicating what went wrong.  The `prefix` is
@@ -44,6 +59,9 @@ pub enum Error {
 
     /// A missing required flag.
     MissingOption(String),
+
+    /// An unexpected option.
+    UnexpectedOption(String),
 }
 
 impl std::fmt::Display for Error {
@@ -60,6 +78,9 @@ impl std::fmt::Display for Error {
             }
             Error::OptionWithoutAValue(key) => {
                 write!(f, "the option '{}' is missing a value", key)
+            }
+            Error::UnexpectedOption(o) => {
+                write!(f, "unexpected option: {}", o)
             }
         }
     }
