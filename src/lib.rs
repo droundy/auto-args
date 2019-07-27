@@ -11,6 +11,30 @@ pub mod guide;
 #[doc(hidden)]
 pub use auto_args_derive::*;
 
+fn align_tabs(inp: &str) -> String {
+    let mut out = String::with_capacity(inp.len());
+    let mut stop1 = 0;
+    let mut stop2 = 0;
+    for l in inp.lines() {
+        let v: Vec<_> = l.splitn(3, '\t').collect();
+        if v.len() > 2 {
+            stop1 = std::cmp::max(stop1, v[0].len()+2);
+            stop2 = std::cmp::max(stop2, v[1].len()+1);
+        }
+    }
+    // We now know where to align the columns.
+    for l in inp.lines() {
+        let v: Vec<_> = l.splitn(3, '\t').collect();
+        if v.len() > 2 {
+            out.push_str(&format!("{:a$}{:b$}{}\n", v[0], v[1], v[2],
+                                  a = stop1, b = stop2));
+        } else {
+            out.push_str(l); out.push('\n');
+        }
+    }
+    out
+}
+
 /// The primary trait, which is implemented by any type which may be
 /// part of your command-line flags.
 pub trait AutoArgs: Sized {
@@ -66,7 +90,7 @@ pub trait AutoArgs: Sized {
     /// Usage text for the actual command
     fn usage() -> String {
         format!("USAGE:
-    {} {}
+  {} {}
 
 For more information try --help",
                 std::env::args_os().next().unwrap().to_string_lossy(),
@@ -75,14 +99,14 @@ For more information try --help",
     /// Help text for the actual command
     fn help() -> String {
         format!("USAGE:
-    {} {}
+  {} {}
 
 {}
 
 For more information try --help",
                 std::env::args_os().next().unwrap().to_string_lossy(),
                 Self::tiny_help_message(""),
-                Self::help_message("", ""))
+                align_tabs(&Self::help_message("", "")))
     }
 }
 

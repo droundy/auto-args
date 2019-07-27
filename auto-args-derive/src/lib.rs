@@ -234,7 +234,7 @@ fn help_with_fields(f: syn::Fields,
                 #check_main_flag
                 let join_prefix = #join_prefix;
                 #( doc.push_str(
-                    &format!("\t{}\n",
+                    &format!("{}\n",
                              <#types as auto_args::AutoArgs>::help_message(&join_prefix(#names),
                                                                            #docs)));
                 )*

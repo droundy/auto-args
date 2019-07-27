@@ -56,16 +56,16 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--foo]
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--foo]
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--foo]
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--foo]
 //! 
-//! 		[--foo]	
+//!   [--foo] 
 //! 
 //! 
 //! For more information try --help
@@ -85,17 +85,17 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--verbose] [--T]
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--verbose] [--T]
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--verbose] [--T]
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--verbose] [--T]
 //! 
-//! 		[--verbose]	Print excess messages.
-//! 		[--T]	The temperature.
+//!   [--verbose] Print excess messages.
+//!   [--T]       The temperature.
 //! 
 //! 
 //! For more information try --help
@@ -120,11 +120,11 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--verbose] [--blue-is-nice-] [--min-T]
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--verbose] [--blue-is-nice-] [--min-T]
 //! 
-//! 		[--verbose]	a simple word has "--" prepended to it.
-//! 		[--blue-is-nice-]	Underscores are replaced with "-" ...
-//! 		[--min-T]	and capital letters are preserved.
+//!   [--verbose]       a simple word has "--" prepended to it.
+//!   [--blue-is-nice-] Underscores are replaced with "-" ...
+//!   [--min-T]         and capital letters are preserved.
 //! 
 //! 
 //! For more information try --help
@@ -149,11 +149,11 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  --name STRING --T FLOAT --directory STRING
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  --name STRING --T FLOAT --directory STRING
 //! 
-//! 		--name STRING	The name of the type
-//! 		--T FLOAT	The temperature of the type
-//! 		--directory STRING	The place where it is
+//!   --name STRING      The name of the type
+//!   --T FLOAT          The temperature of the type
+//!   --directory STRING The place where it is
 //! 
 //! 
 //! For more information try --help
@@ -183,9 +183,9 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--name STRING]
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--name STRING]
 //! 
-//! 		[--name STRING]	The name is an optional argument.
+//!   [--name STRING] The name is an optional argument.
 //! 
 //! 
 //! For more information try --help
@@ -215,9 +215,10 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc fixme enum
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc fixme enum
 //! 
-//! 	fixme enum	
+//!   fixme enum 
+//! 
 //! 
 //! For more information try --help
 //! ```
@@ -260,13 +261,13 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc   --position-x FLOAT --position-y FLOAT  --velocity-x FLOAT --velocity-y FLOAT
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc   --position-x FLOAT --position-y FLOAT  --velocity-x FLOAT --velocity-y FLOAT
 //! 
-//! 			--position-x FLOAT	
-//! 		--position-y FLOAT	
+//!   --position-x FLOAT 
+//!   --position-y FLOAT 
 //! 
-//! 			--velocity-x FLOAT	
-//! 		--velocity-y FLOAT	
+//!   --velocity-x FLOAT 
+//!   --velocity-y FLOAT 
 //! 
 //! 
 //! 
@@ -301,18 +302,18 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc   --name STRING  --address STRING
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc   --name STRING  --address STRING
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc   --name STRING  --address STRING
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc   --name STRING  --address STRING
 //! 
-//! 			--name STRING	The user's name
+//!   --name STRING    The user's name
 //! 
-//! 			--address STRING	The user's address
+//!   --address STRING The user's address
 //! 
 //! 
 //! 
