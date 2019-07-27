@@ -55,7 +55,20 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme struct  
+//! USAGE:
+//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--foo]
+//! 
+//! For more information try --help
+//! ```
+//! and the following help message.
+//! ```ignore
+//! USAGE:
+//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--foo]
+//! 
+//! 		[--foo]	
+//! 
+//! 
+//! For more information try --help
 //! ```
 //! A single boolean flag is treated as an optional flag.
 //! ## Adding help information
@@ -71,7 +84,21 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme struct  
+//! USAGE:
+//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--verbose] [--T]
+//! 
+//! For more information try --help
+//! ```
+//! and the following help message.
+//! ```ignore
+//! USAGE:
+//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--verbose] [--T]
+//! 
+//! 		[--verbose]	Print excess messages.
+//! 		[--T]	The temperature.
+//! 
+//! 
+//! For more information try --help
 //! ```
 //! I would always documentation for actual projects, so I'll try
 //! to model that here, even though these examples are all
@@ -92,7 +119,15 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme struct  
+//! USAGE:
+//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--verbose] [--blue-is-nice-] [--min-T]
+//! 
+//! 		[--verbose]	a simple word has "--" prepended to it.
+//! 		[--blue-is-nice-]	Underscores are replaced with "-" ...
+//! 		[--min-T]	and capital letters are preserved.
+//! 
+//! 
+//! For more information try --help
 //! ```
 //! Thus you can create most any flag name you care for, and it is
 //! easy to tell which flag corresponds to which field in your
@@ -113,7 +148,15 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme struct  
+//! USAGE:
+//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  --name STRING --T FLOAT --directory STRING
+//! 
+//! 		--name STRING	The name of the type
+//! 		--T FLOAT	The temperature of the type
+//! 		--directory STRING	The place where it is
+//! 
+//! 
+//! For more information try --help
 //! ```
 //! I should note that integer types do allow their value to be
 //! specified using scientific notation, as in `1e6` rather than
@@ -139,7 +182,13 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme struct  
+//! USAGE:
+//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--name STRING]
+//! 
+//! 		[--name STRING]	The name is an optional argument.
+//! 
+//! 
+//! For more information try --help
 //! ```
 //! The value is then `None` if the user did not specify that flag.
 //! ## Exclusive flags
@@ -165,7 +214,12 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme enum  
+//! USAGE:
+//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc fixme enum
+//! 
+//! 	fixme enum	
+//! 
+//! For more information try --help
 //! ```
 //! This example illustrates the three kinds of `enum` variants.
 //! Sadly, the help message does not indicate that these flags are
@@ -205,7 +259,18 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme struct  
+//! USAGE:
+//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc   --position-x FLOAT --position-y FLOAT  --velocity-x FLOAT --velocity-y FLOAT
+//! 
+//! 			--position-x FLOAT	
+//! 		--position-y FLOAT	
+//! 
+//! 			--velocity-x FLOAT	
+//! 		--velocity-y FLOAT	
+//! 
+//! 
+//! 
+//! For more information try --help
 //! ```
 //! ## Flattened nesting types
 //! As you say in the last example, nesting types allows you to
@@ -235,7 +300,23 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme struct  
+//! USAGE:
+//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc   --name STRING  --address STRING
+//! 
+//! For more information try --help
+//! ```
+//! and the following help message.
+//! ```ignore
+//! USAGE:
+//!     /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc   --name STRING  --address STRING
+//! 
+//! 			--name STRING	The user's name
+//! 
+//! 			--address STRING	The user's address
+//! 
+//! 
+//! 
+//! For more information try --help
 //! ```
 //! This may be a good idea if `MyConfig` and `YourConfig` are
 //! implementation details that your user need not be aware of.

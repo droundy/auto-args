@@ -154,6 +154,111 @@ fn return_with_fields(f: syn::Fields,
     }
 }
 
+fn usage_with_fields(f: syn::Fields,
+                     name: proc_macro2::TokenStream,
+                     am_enum_variant: bool) -> proc_macro2::TokenStream {
+    let join_prefix = create_join_prefix();
+    match f {
+        syn::Fields::Named(ref fields) => {
+            let f: Vec<_> = fields.named.clone().into_iter().collect();
+            let names = f.iter().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
+            let types = f.iter().map(|x| x.ty.clone());
+            let types2 = types.clone();
+            let idents = f.iter().map(|x| x.ident.clone().unwrap());
+            let check_main_flag = if am_enum_variant {
+                quote!{
+                    if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
+                        // Nothing special to do, something below requires input.
+                    } else if !bool::parse_internal(&_prefix, args)? {
+                        doc.push_str(&format!("{} XXX ", key));
+                    }
+                    }
+            } else {
+                quote!{}
+            };
+            quote! {
+                let mut doc = String::new();
+                #check_main_flag
+                let join_prefix = #join_prefix;
+                #( doc.push_str(
+                    &format!(" {}",
+                             <#types as auto_args::AutoArgs>::tiny_help_message(&join_prefix(#names))));
+                )*
+                doc
+            }
+        },
+        syn::Fields::Unit => {
+            quote!( return Ok( #name ); )
+        },
+        syn::Fields::Unnamed(ref unnamed) if unnamed.unnamed.len() == 1 => {
+            let f = unnamed.unnamed.iter().next().expect("we should have one field");
+            let mytype = f.ty.clone();
+            quote!{
+                if let Ok(x) = <#mytype as auto_args::AutoArgs>::parse_internal(&_prefix, args) {
+                    return Ok(#name(x));
+                }
+            }
+        },
+        _ => {
+            panic!("AutoArgs only supports named fields so far!")
+        },
+    }
+}
+
+
+fn help_with_fields(f: syn::Fields,
+                    name: proc_macro2::TokenStream,
+                    am_enum_variant: bool) -> proc_macro2::TokenStream {
+    let join_prefix = create_join_prefix();
+    match f {
+        syn::Fields::Named(ref fields) => {
+            let f: Vec<_> = fields.named.clone().into_iter().collect();
+            let docs: Vec<_> = f.iter().map(|x| get_doc_comment(&x.attrs)).collect();
+            let names = f.iter().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
+            let types = f.iter().map(|x| x.ty.clone());
+            let types2 = types.clone();
+            let idents = f.iter().map(|x| x.ident.clone().unwrap());
+            let check_main_flag = if am_enum_variant {
+                quote!{
+                    if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
+                        // Nothing special to do, something below requires input.
+                    } else if !bool::parse_internal(&_prefix, args)? {
+                        doc.push_str(&format!("\t{}\t{}", key, _doc));
+                    }
+                }
+            } else {
+                quote!{}
+            };
+            quote! {
+                let mut doc = String::new();
+                #check_main_flag
+                let join_prefix = #join_prefix;
+                #( doc.push_str(
+                    &format!("\t{}\n",
+                             <#types as auto_args::AutoArgs>::help_message(&join_prefix(#names),
+                                                                           #docs)));
+                )*
+                doc
+            }
+        },
+        syn::Fields::Unit => {
+            quote!( return Ok( #name ); )
+        },
+        syn::Fields::Unnamed(ref unnamed) if unnamed.unnamed.len() == 1 => {
+            let f = unnamed.unnamed.iter().next().expect("we should have one field");
+            let mytype = f.ty.clone();
+            quote!{
+                if let Ok(x) = <#mytype as auto_args::AutoArgs>::parse_internal(&_prefix, args) {
+                    return Ok(#name(x));
+                }
+            }
+        },
+        _ => {
+            panic!("AutoArgs only supports named fields so far!")
+        },
+    }
+}
+
 fn create_join_prefix() -> proc_macro2::TokenStream {
     quote!{
         move |name: &str| -> String {
@@ -196,6 +301,10 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             let types3 = f.iter().rev().map(|x| x.ty.clone());
             let return_struct = return_with_fields(syn::Fields::Named(fields.clone()),
                                                    quote!(#name), false);
+            let usage_struct = usage_with_fields(syn::Fields::Named(fields.clone()),
+                                                 quote!(#name), false);
+            let help_struct = help_with_fields(syn::Fields::Named(fields.clone()),
+                                               quote!(#name), false);
             quote!{
                 const REQUIRES_INPUT: bool = #(
                     <#types3 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false;
@@ -205,7 +314,12 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #return_struct
                 }
                 fn tiny_help_message(key: &str) -> String {
-                    "fixme struct".to_string()
+                    let _prefix = #find_prefix;
+                    #usage_struct
+                }
+                fn help_message(key: &str, _doc: &str) -> String {
+                    let _prefix = #find_prefix;
+                    #help_struct
                 }
             }
         },

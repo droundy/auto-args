@@ -69,7 +69,10 @@ fn guide() {
     }
     // STOP CODE
     /// This gives the following usage.
-    strings.push(Foo::help_message("foo", ""));
+    strings.push(Foo::usage());
+    // INSERT STRING
+    /// and the following help message.
+    strings.push(Foo::help());
     // INSERT STRING
     /// A single boolean flag is treated as an optional flag.
 
@@ -88,7 +91,10 @@ fn guide() {
     }
     // STOP CODE
     /// This gives the following usage.
-    strings.push(Help::help_message("help", ""));
+    strings.push(Help::usage());
+    // INSERT STRING
+    /// and the following help message.
+    strings.push(Help::help());
     // INSERT STRING
     /// I would always documentation for actual projects, so I'll try
     /// to model that here, even though these examples are all
@@ -112,7 +118,7 @@ fn guide() {
     }
     // STOP CODE
     /// This gives the following usage.
-    strings.push(Flags::help_message("flags", ""));
+    strings.push(Flags::help());
     // INSERT STRING
     /// Thus you can create most any flag name you care for, and it is
     /// easy to tell which flag corresponds to which field in your
@@ -136,7 +142,7 @@ fn guide() {
     }
     // STOP CODE
     /// This gives the following usage.
-    strings.push(Types::help_message("types", ""));
+    strings.push(Types::help());
     // INSERT STRING
 
     /// I should note that integer types do allow their value to be
@@ -165,7 +171,7 @@ fn guide() {
     }
     // STOP CODE
     /// This gives the following usage.
-    strings.push(Optional::help_message("optional", ""));
+    strings.push(Optional::help());
     // INSERT STRING
     /// The value is then `None` if the user did not specify that flag.
 
@@ -193,7 +199,7 @@ fn guide() {
     }
     // STOP CODE
     /// This gives the following usage.
-    strings.push(Exclusive::help_message("exclusive", ""));
+    strings.push(Exclusive::help());
     // INSERT STRING
     /// This example illustrates the three kinds of `enum` variants.
     /// Sadly, the help message does not indicate that these flags are
@@ -235,7 +241,7 @@ fn guide() {
     }
     // STOP CODE
     /// This gives the following usage.
-    strings.push(Nested::help_message("nested", ""));
+    strings.push(Nested::help());
     // INSERT STRING
 
 
@@ -267,7 +273,10 @@ fn guide() {
     }
     // STOP CODE
     /// This gives the following usage.
-    strings.push(Flattened::help_message("flattened", ""));
+    strings.push(Flattened::usage());
+    // INSERT STRING
+    /// and the following help message.
+    strings.push(Flattened::help());
     // INSERT STRING
     /// This may be a good idea if `MyConfig` and `YourConfig` are
     /// implementation details that your user need not be aware of.

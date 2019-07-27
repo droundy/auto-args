@@ -61,7 +61,7 @@ pub trait AutoArgs: Sized {
     fn tiny_help_message(key: &str) -> String;
     /// Return a help message.
     fn help_message(key: &str, doc: &str) -> String {
-        format!("    {}  {}", Self::tiny_help_message(key), doc)
+        format!("\t{}\t{}", Self::tiny_help_message(key), doc)
     }
     /// Usage text for the actual command
     fn usage() -> String {
@@ -244,9 +244,9 @@ impl AutoArgs for bool {
     }
     fn tiny_help_message(key: &str) -> String {
         if key == "" {
-            "STRING".to_string()
+            "(true|false)".to_string()
         } else {
-            format!("{} STRING", key)
+            format!("[{}]", key)
         }
     }
 }
