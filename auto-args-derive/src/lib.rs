@@ -120,13 +120,14 @@ fn return_with_fields(f: syn::Fields,
                     if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
                         // Nothing special to do, something below requires input.
                     } else if !bool::parse_internal(&_prefix, args)? {
-                        return Err(auto_args::Error::MissingOption(key.to_string()))
+                        return Err(auto_args::Error::MissingOption(key.to_string()));
                     }
                 }
             } else {
                 quote!{}
             };
             quote! {
+                #check_main_flag
                 let join_prefix = #join_prefix;
                 return Ok( #name {
                     #( #idents:
@@ -186,7 +187,6 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let name = &input.ident;
     let generics = &input.generics;
     let find_prefix = create_find_prefix();
-    let join_prefix = create_join_prefix();
     let myimpl = match input.data {
         Struct(DataStruct {
             fields: syn::Fields::Named(ref fields),
@@ -194,7 +194,6 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         }) => {
             let f: Vec<_> = fields.named.clone().into_iter().collect();
             let types3 = f.iter().rev().map(|x| x.ty.clone());
-            let names3 = f.iter().rev().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
             let return_struct = return_with_fields(syn::Fields::Named(fields.clone()),
                                                    quote!(#name), false);
             quote!{
@@ -206,7 +205,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #return_struct
                 }
                 fn tiny_help_message(key: &str) -> String {
-                    "fixme".to_string()
+                    "fixme struct".to_string()
                 }
             }
         },
@@ -247,19 +246,13 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         .map(|x| #name(x))
                 }
                 fn tiny_help_message(key: &str) -> String {
-                    "fixme".to_string()
+                    "fixme unnamed".to_string()
                 }
             }
         },
         Enum(ref e) => {
             let v: Vec<_> = e.variants.iter().collect();
-            let vnames: Vec<_> = e.variants.iter().map(|v| camel_case_to_kebab(&v.ident.to_string())).collect();
-            let only_one_variant = vnames.len() == 1;
-            // If only_one_variant is true, this is a special case,
-            // and the code below won't work, because required_unless
-            // logic fails when the list of "unless" fields is empty.
-            // Really, we should treat this thing as a struct with an
-            // additional layer of prefixing going on.
+             let vnames: Vec<_> = e.variants.iter().map(|v| camel_case_to_kebab(&v.ident.to_string())).collect();
             // println!("variant names are {:?}", names);
             let return_enum = v.iter().map(|v| {
                 let variant_name = v.ident.clone();
@@ -285,7 +278,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     Err(auto_args::Error::MissingOption("a missing thing".to_string()))
                 }
                 fn tiny_help_message(key: &str) -> String {
-                    "fixme".to_string()
+                    "fixme enum".to_string()
                 }
             };
             s

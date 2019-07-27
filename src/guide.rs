@@ -55,7 +55,7 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme  
+//!     fixme struct  
 //! ```
 //! A single boolean flag is treated as an optional flag.
 //! ## Adding help information
@@ -71,7 +71,7 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme  
+//!     fixme struct  
 //! ```
 //! I would always documentation for actual projects, so I'll try
 //! to model that here, even though these examples are all
@@ -92,7 +92,7 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme  
+//!     fixme struct  
 //! ```
 //! Thus you can create most any flag name you care for, and it is
 //! easy to tell which flag corresponds to which field in your
@@ -113,7 +113,7 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme  
+//!     fixme struct  
 //! ```
 //! I should note that integer types do allow their value to be
 //! specified using scientific notation, as in `1e6` rather than
@@ -139,7 +139,7 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme  
+//!     fixme struct  
 //! ```
 //! The value is then `None` if the user did not specify that flag.
 //! ## Exclusive flags
@@ -165,7 +165,7 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme  
+//!     fixme enum  
 //! ```
 //! This example illustrates the three kinds of `enum` variants.
 //! Sadly, the help message does not indicate that these flags are
@@ -205,7 +205,7 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme  
+//!     fixme struct  
 //! ```
 //! ## Flattened nesting types
 //! As you say in the last example, nesting types allows you to
@@ -235,7 +235,7 @@
 //! ```
 //! This gives the following usage.
 //! ```ignore
-//!     fixme  
+//!     fixme struct  
 //! ```
 //! This may be a good idea if `MyConfig` and `YourConfig` are
 //! implementation details that your user need not be aware of.
