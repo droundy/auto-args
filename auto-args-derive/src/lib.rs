@@ -260,21 +260,11 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             // logic fails when the list of "unless" fields is empty.
             // Really, we should treat this thing as a struct with an
             // additional layer of prefixing going on.
-            let vnames2 = vnames.clone();
-            let vnames3 = vnames.clone();
-            let vnames4 = vnames.clone();
-            let vnames5 = vnames.clone();
-            let vnames6 = vnames.clone();
             // println!("variant names are {:?}", names);
-            let fields: Vec<_> = v.iter().map(|x| x.fields.clone()).collect();
-            let one_field: Vec<_> = fields.iter().map(|f| one_field_name(f.clone())).collect();
-            let one_field2 = one_field.clone();
-            let one_field3 = one_field.clone();
             let return_enum = v.iter().map(|v| {
                 let variant_name = v.ident.clone();
                 return_with_fields(v.fields.clone(), quote!(#name::#variant_name), true)
             });
-            let find_prefix = create_find_prefix();
             let s = quote! {
                 const REQUIRES_INPUT: bool = true;
                 fn parse_internal(key: &str, args: &mut Vec<std::ffi::OsString>)

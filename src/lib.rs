@@ -6,6 +6,8 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
 
+pub mod guide;
+
 #[doc(hidden)]
 pub use auto_args_derive::*;
 

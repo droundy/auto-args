@@ -31,7 +31,7 @@
 //! }
 //! 
 //! fn main() {
-//! let opt = Opt::from_args();
+//! let opt = Opt::parse_args();
 //! println!("{:?}", opt);
 //! }
 //! ```
