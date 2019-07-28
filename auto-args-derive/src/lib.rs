@@ -211,7 +211,6 @@ fn help_with_fields(f: syn::Fields,
     match f {
         syn::Fields::Named(ref fields) => {
             let f: Vec<_> = fields.named.clone().into_iter().collect();
-            let docs: Vec<_> = f.iter().map(|x| get_doc_comment(&x.attrs)).collect();
             let names = f.iter().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
             let types = f.iter().map(|x| x.ty.clone());
             let types2 = types.clone();
@@ -220,8 +219,8 @@ fn help_with_fields(f: syn::Fields,
                 quote!{
                     if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
                         // Nothing special to do, something below requires input.
-                    } else if !bool::parse_internal(&_prefix, args)? {
-                        doc.push_str(&format!("\t{}\t{}", key, _doc));
+                    } else {
+                        doc.push_str(&format!("{} {}", key, doc));
                     }
                 }
             } else {
@@ -232,23 +231,20 @@ fn help_with_fields(f: syn::Fields,
                 #check_main_flag
                 let join_prefix = #join_prefix;
                 #( doc.push_str(
-                    &format!("{}\n",
-                             <#types as auto_args::AutoArgs>::help_message(&join_prefix(#names),
-                                                                           #docs)));
+                    &format!(" {}",
+                             <#types as auto_args::AutoArgs>::tiny_help_message(&join_prefix(#names))));
                 )*
                 doc
             }
         },
         syn::Fields::Unit => {
-            quote!( return Ok( #name ); )
+            quote!( format!("{} {}", _prefix, doc) )
         },
         syn::Fields::Unnamed(ref unnamed) if unnamed.unnamed.len() == 1 => {
             let f = unnamed.unnamed.iter().next().expect("we should have one field");
             let mytype = f.ty.clone();
             quote!{
-                if let Ok(x) = <#mytype as auto_args::AutoArgs>::parse_internal(&_prefix, args) {
-                    return Ok(#name(x));
-                }
+                <#mytype as auto_args::AutoArgs>::tiny_help_message(&_prefix)
             }
         },
         _ => {
@@ -371,6 +367,11 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 let variant_name = v.ident.clone();
                 return_with_fields(v.fields.clone(), quote!(#name::#variant_name), true)
             });
+            let helps = v.iter().map(|v| {
+                let variant_name = v.ident.clone();
+                help_with_fields(v.fields.clone(),
+                                 quote!(#name::#variant_name), true)
+            });
             let usages = v.iter().map(|v| {
                 let variant_name = v.ident.clone();
                 usage_with_fields(v.fields.clone(),
@@ -395,8 +396,22 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     )*
                     Err(auto_args::Error::MissingOption("a missing thing".to_string()))
                 }
-                fn help_message(key: &str, _doc: &str) -> String {
-                    "fixme enum help".to_string()
+                fn help_message(key: &str, doc: &str) -> String {
+                    let _prefix = match key.chars().next() {
+                        None | Some('_') => "--".to_string(),
+                        _ => format!("{}-", key),
+                    };
+                    let mut doc = String::new();
+                    #(
+                        {
+                            let variant = #vnames;
+                            let _prefix = format!("{}{}", _prefix, variant);
+                            doc.push_str(&{ #helps });
+                            doc.push_str("\n");
+                        }
+
+                    )*
+                    doc
                 }
                 fn tiny_help_message(key: &str) -> String {
                     let _prefix = match key.chars().next() {
