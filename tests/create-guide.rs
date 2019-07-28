@@ -199,6 +199,9 @@ fn guide() {
     }
     // STOP CODE
     /// This gives the following usage.
+    strings.push(Exclusive::usage());
+    // INSERT STRING
+    /// and the following help message.
     strings.push(Exclusive::help());
     // INSERT STRING
     /// This example illustrates the three kinds of `enum` variants.

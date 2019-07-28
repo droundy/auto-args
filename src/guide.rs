@@ -215,9 +215,16 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc fixme enum
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
 //! 
-//!   fixme enum 
+//! For more information try --help
+//! ```
+//! and the following help message.
+//! ```ignore
+//! USAGE:
+//!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
+//! 
+//! fixme enum help
 //! 
 //! 
 //! For more information try --help

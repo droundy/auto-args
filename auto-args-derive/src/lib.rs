@@ -169,10 +169,10 @@ fn usage_with_fields(f: syn::Fields,
                 quote!{
                     if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
                         // Nothing special to do, something below requires input.
-                    } else if !bool::parse_internal(&_prefix, args)? {
+                    } else {
                         doc.push_str(&format!("{} XXX ", key));
                     }
-                    }
+                }
             } else {
                 quote!{}
             };
@@ -188,15 +188,13 @@ fn usage_with_fields(f: syn::Fields,
             }
         },
         syn::Fields::Unit => {
-            quote!( return Ok( #name ); )
+            quote!( _prefix.clone() )
         },
         syn::Fields::Unnamed(ref unnamed) if unnamed.unnamed.len() == 1 => {
             let f = unnamed.unnamed.iter().next().expect("we should have one field");
             let mytype = f.ty.clone();
             quote!{
-                if let Ok(x) = <#mytype as auto_args::AutoArgs>::parse_internal(&_prefix, args) {
-                    return Ok(#name(x));
-                }
+                <#mytype as auto_args::AutoArgs>::tiny_help_message(&_prefix)
             }
         },
         _ => {
@@ -366,11 +364,17 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         },
         Enum(ref e) => {
             let v: Vec<_> = e.variants.iter().collect();
-             let vnames: Vec<_> = e.variants.iter().map(|v| camel_case_to_kebab(&v.ident.to_string())).collect();
+            let vnames: Vec<_> = e.variants.iter().map(|v| camel_case_to_kebab(&v.ident.to_string())).collect();
+            let vnames = &vnames;
             // println!("variant names are {:?}", names);
             let return_enum = v.iter().map(|v| {
                 let variant_name = v.ident.clone();
                 return_with_fields(v.fields.clone(), quote!(#name::#variant_name), true)
+            });
+            let usages = v.iter().map(|v| {
+                let variant_name = v.ident.clone();
+                usage_with_fields(v.fields.clone(),
+                                  quote!(#name::#variant_name), true)
             });
             let s = quote! {
                 const REQUIRES_INPUT: bool = true;
@@ -391,8 +395,30 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     )*
                     Err(auto_args::Error::MissingOption("a missing thing".to_string()))
                 }
+                fn help_message(key: &str, _doc: &str) -> String {
+                    "fixme enum help".to_string()
+                }
                 fn tiny_help_message(key: &str) -> String {
-                    "fixme enum".to_string()
+                    let _prefix = match key.chars().next() {
+                        None | Some('_') => "--".to_string(),
+                        _ => format!("{}-", key),
+                    };
+                    let mut doc = String::new();
+                    doc.push_str("( ");
+                    #(
+                        {
+                            let variant = #vnames;
+                            let _prefix = format!("{}{}", _prefix, variant);
+                            doc.push_str(&{ #usages });
+                            doc.push_str(" | ");
+                        }
+
+                    )*
+                    for _ in 0..3 {
+                        doc.pop();
+                    }
+                    doc.push_str(" )");
+                    doc
                 }
             };
             s
