@@ -211,6 +211,7 @@ fn help_with_fields(f: syn::Fields,
     match f {
         syn::Fields::Named(ref fields) => {
             let f: Vec<_> = fields.named.clone().into_iter().collect();
+            let docs: Vec<_> = f.iter().map(|x| get_doc_comment(&x.attrs)).collect();
             let names = f.iter().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
             let types = f.iter().map(|x| x.ty.clone());
             let types2 = types.clone();
@@ -220,7 +221,7 @@ fn help_with_fields(f: syn::Fields,
                     if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
                         // Nothing special to do, something below requires input.
                     } else {
-                        doc.push_str(&format!("{} {}", key, doc));
+                        doc.push_str(&format!("{} {}", key, variant_doc));
                     }
                 }
             } else {
@@ -231,20 +232,21 @@ fn help_with_fields(f: syn::Fields,
                 #check_main_flag
                 let join_prefix = #join_prefix;
                 #( doc.push_str(
-                    &format!(" {}",
-                             <#types as auto_args::AutoArgs>::tiny_help_message(&join_prefix(#names))));
+                    &format!("{}\n",
+                             <#types as auto_args::AutoArgs>::help_message(&join_prefix(#names),
+                                                                           #docs)));
                 )*
                 doc
             }
         },
         syn::Fields::Unit => {
-            quote!( format!("{} {}", _prefix, doc) )
+            quote!( format!("\t{}\t{}\n", _prefix, variant_doc) )
         },
         syn::Fields::Unnamed(ref unnamed) if unnamed.unnamed.len() == 1 => {
             let f = unnamed.unnamed.iter().next().expect("we should have one field");
             let mytype = f.ty.clone();
             quote!{
-                <#mytype as auto_args::AutoArgs>::tiny_help_message(&_prefix)
+                <#mytype as auto_args::AutoArgs>::help_message(&_prefix, &variant_doc)
             }
         },
         _ => {
@@ -361,6 +363,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         Enum(ref e) => {
             let v: Vec<_> = e.variants.iter().collect();
             let vnames: Vec<_> = e.variants.iter().map(|v| camel_case_to_kebab(&v.ident.to_string())).collect();
+            let variant_docs: Vec<_> = e.variants.iter().map(|v| get_doc_comment(&v.attrs)).collect();
             let vnames = &vnames;
             // println!("variant names are {:?}", names);
             let return_enum = v.iter().map(|v| {
@@ -402,15 +405,24 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         _ => format!("{}-", key),
                     };
                     let mut doc = String::new();
+                    doc.push_str("\tEITHER\t\n");
                     #(
                         {
                             let variant = #vnames;
                             let _prefix = format!("{}{}", _prefix, variant);
+                            let variant_doc = #variant_docs;
                             doc.push_str(&{ #helps });
-                            doc.push_str("\n");
+                            if !doc.ends_with("\n") {
+                                doc.push_str("\n");
+                            }
+                            doc.push_str("\tOR\t\n");
                         }
 
                     )*
+                    for _ in 0.."\tOR\t\n".len() {
+                        doc.pop();
+                    }
+                    doc.push_str("\n");
                     doc
                 }
                 fn tiny_help_message(key: &str) -> String {

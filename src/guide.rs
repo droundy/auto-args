@@ -65,7 +65,7 @@
 //! USAGE:
 //!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--foo]
 //! 
-//!  [--foo]
+//!   [--foo] 
 //! 
 //! 
 //! For more information try --help
@@ -94,7 +94,8 @@
 //! USAGE:
 //!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--verbose] [--T]
 //! 
-//!  [--verbose] [--T]
+//!   [--verbose] Print excess messages.
+//!   [--T]       The temperature.
 //! 
 //! 
 //! For more information try --help
@@ -121,7 +122,9 @@
 //! USAGE:
 //!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--verbose] [--blue-is-nice-] [--min-T]
 //! 
-//!  [--verbose] [--blue-is-nice-] [--min-T]
+//!   [--verbose]       a simple word has "--" prepended to it.
+//!   [--blue-is-nice-] Underscores are replaced with "-" ...
+//!   [--min-T]         and capital letters are preserved.
 //! 
 //! 
 //! For more information try --help
@@ -148,7 +151,9 @@
 //! USAGE:
 //!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  --name STRING --T FLOAT --directory STRING
 //! 
-//!  --name STRING --T FLOAT --directory STRING
+//!   --name STRING      The name of the type
+//!   --T FLOAT          The temperature of the type
+//!   --directory STRING The place where it is
 //! 
 //! 
 //! For more information try --help
@@ -180,7 +185,7 @@
 //! USAGE:
 //!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc  [--name STRING]
 //! 
-//!  [--name STRING]
+//!   [--name STRING] The name is an optional argument.
 //! 
 //! 
 //! For more information try --help
@@ -219,10 +224,13 @@
 //! USAGE:
 //!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
 //! 
-//!  --first-a STRING --first-b STRING
-//! --second-flag STRING
-//! --Third  --first-a STRING --first-b STRING
-//! --second-flag STRING
+//!   EITHER               
+//!   --first-a STRING     This is the "a" value
+//!   --first-b STRING     Only one line of comment shows up in the help.
+//!   OR                   
+//!   --second-flag STRING A string that cannot be used with any other flag
+//!   OR                   
+//!   --Third              A flag with no value, and with a capital letter.
 //! 
 //! 
 //! 
@@ -269,7 +277,12 @@
 //! USAGE:
 //!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc   --position-x FLOAT --position-y FLOAT  --velocity-x FLOAT --velocity-y FLOAT
 //! 
-//!   --position-x FLOAT --position-y FLOAT  --velocity-x FLOAT --velocity-y FLOAT
+//!   --position-x FLOAT 
+//!   --position-y FLOAT 
+//! 
+//!   --velocity-x FLOAT 
+//!   --velocity-y FLOAT 
+//! 
 //! 
 //! 
 //! For more information try --help
@@ -312,7 +325,10 @@
 //! USAGE:
 //!   /home/droundy/src/auto-opt/target/debug/deps/create_guide-86b0b883bc2003dc   --name STRING  --address STRING
 //! 
-//!   --name STRING  --address STRING
+//!   --name STRING    The user's name
+//! 
+//!   --address STRING The user's address
+//! 
 //! 
 //! 
 //! For more information try --help
