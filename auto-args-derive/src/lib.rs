@@ -120,7 +120,7 @@ fn return_with_fields(f: syn::Fields,
                     if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
                         // Nothing special to do, something below requires input.
                     } else if !bool::parse_internal(&_prefix, args)? {
-                        return Err(auto_args::Error::MissingOption(key.to_string()));
+                        return Err(auto_args::Error::MissingOption(_prefix.clone()));
                     }
                 }
             } else {
@@ -137,7 +137,13 @@ fn return_with_fields(f: syn::Fields,
             }
         },
         syn::Fields::Unit => {
-            quote!( return Ok( #name ); )
+            quote!{
+                if bool::parse_internal(&_prefix, args)? {
+                    return Ok( #name );
+                } else {
+                    return Err(auto_args::Error::MissingOption(_prefix.clone()));
+                }
+            }
         },
         syn::Fields::Unnamed(ref unnamed) if unnamed.unnamed.len() == 1 => {
             let f = unnamed.unnamed.iter().next().expect("we should have one field");
@@ -262,7 +268,7 @@ fn create_join_prefix() -> proc_macro2::TokenStream {
         move |name: &str| -> String {
             if name.len() == 0 {
                 let mut x = _prefix.to_string();
-                x.pop();
+                // x.pop();
                 x
             } else if _prefix.chars().last() == Some('-') {
                 format!("{}{}", _prefix, name)
@@ -276,7 +282,10 @@ fn create_find_prefix() -> proc_macro2::TokenStream {
     quote!{
         match key.chars().next() {
             None | Some('_') => "--".to_string(),
-            _ => format!("{}-", key),
+            _ => match key.chars().last() {
+                Some('-') => key.to_string(),
+                _ => format!("{}-", key),
+            }
         }
     }
 }
@@ -389,13 +398,22 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 {
                     let _prefix = match key.chars().next() {
                         None | Some('_') => "--".to_string(),
-                        _ => format!("{}-", key),
+                        _ => match key.chars().last() {
+                            Some('-') => key.to_string(),
+                            _ => format!("{}-", key),
+                        }
                     };
                     #(
                         {
                             let variant = #vnames;
                             let _prefix = format!("{}{}", _prefix, variant);
-                            #return_enum
+                            let mut closure = || -> Result<_, auto_args::Error> {
+                                #return_enum
+                                Err(auto_args::Error::MissingOption("ooo".to_string()))
+                            };
+                            if let Ok(v) = closure() {
+                                return Ok(v);
+                            }
                         }
 
                     )*
@@ -404,7 +422,10 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 fn help_message(key: &str, doc: &str) -> String {
                     let _prefix = match key.chars().next() {
                         None | Some('_') => "--".to_string(),
-                        _ => format!("{}-", key),
+                        _ => match key.chars().last() {
+                            Some('-') => key.to_string(),
+                            _ => format!("{}-", key),
+                        }
                     };
                     let mut doc = String::new();
                     doc.push_str("\tEITHER\t\n");
@@ -430,7 +451,10 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 fn tiny_help_message(key: &str) -> String {
                     let _prefix = match key.chars().next() {
                         None | Some('_') => "--".to_string(),
-                        _ => format!("{}-", key),
+                        _ => match key.chars().last() {
+                            Some('-') => key.to_string(),
+                            _ => format!("{}-", key),
+                        }
                     };
                     let mut doc = String::new();
                     doc.push_str("( ");
