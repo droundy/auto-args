@@ -231,7 +231,7 @@
 //!   --second-flag STRING A string that cannot be used with any other flag
 //!   OR                   
 //!   --Third              A flag with no value, and with a capital letter.
-//! 
+//!                        
 //! 
 //! 
 //! For more information try --help
@@ -279,10 +279,8 @@
 //! 
 //!   --position-x FLOAT 
 //!   --position-y FLOAT 
-//! 
 //!   --velocity-x FLOAT 
 //!   --velocity-y FLOAT 
-//! 
 //! 
 //! 
 //! For more information try --help
@@ -326,9 +324,7 @@
 //!   create_guide-86b0b883bc2003dc   --name STRING  --address STRING
 //! 
 //!   --name STRING    The user's name
-//! 
 //!   --address STRING The user's address
-//! 
 //! 
 //! 
 //! For more information try --help

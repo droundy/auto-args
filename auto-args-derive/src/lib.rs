@@ -232,9 +232,11 @@ fn help_with_fields(f: syn::Fields,
                 #check_main_flag
                 let join_prefix = #join_prefix;
                 #( doc.push_str(
-                    &format!("{}\n",
-                             <#types as auto_args::AutoArgs>::help_message(&join_prefix(#names),
-                                                                           #docs)));
+                    &<#types as auto_args::AutoArgs>::help_message(&join_prefix(#names),
+                                                                   #docs));
+                   if !doc.ends_with("\n") {
+                       doc.push('\n');
+                   }
                 )*
                 doc
             }
@@ -422,7 +424,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     for _ in 0.."\tOR\t\n".len() {
                         doc.pop();
                     }
-                    doc.push_str("\n");
+                    doc.push_str("\t\t");
                     doc
                 }
                 fn tiny_help_message(key: &str) -> String {
