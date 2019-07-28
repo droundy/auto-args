@@ -93,7 +93,8 @@ pub trait AutoArgs: Sized {
   {} {}
 
 For more information try --help",
-                std::env::args_os().next().unwrap().to_string_lossy(),
+                std::env::args_os().next().unwrap().to_string_lossy()
+                .rsplit("/").next().unwrap().to_string(),
                 Self::tiny_help_message(""))
     }
     /// Help text for the actual command
@@ -104,7 +105,8 @@ For more information try --help",
 {}
 
 For more information try --help",
-                std::env::args_os().next().unwrap().to_string_lossy(),
+                std::env::args_os().next().unwrap().to_string_lossy()
+                .rsplit("/").next().unwrap().to_string(),
                 Self::tiny_help_message(""),
                 align_tabs(&Self::help_message("", "")))
     }
