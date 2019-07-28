@@ -403,8 +403,11 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             _ => format!("{}-", key),
                         }
                     };
+                    let orig_args = args;
                     #(
                         {
+                            let mut args = orig_args.clone();
+                            let args = &mut args;
                             let variant = #vnames;
                             let _prefix = format!("{}{}", _prefix, variant);
                             let mut closure = || -> Result<_, auto_args::Error> {
@@ -412,7 +415,13 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 Err(auto_args::Error::MissingOption("ooo".to_string()))
                             };
                             if let Ok(v) = closure() {
+                                println!("xxxxxxxxx args remaining: {:?}", args);
+                                println!("found variant {}", variant);
+                                *orig_args = args.clone();
+                                println!("args remaining: {:?}", orig_args);
                                 return Ok(v);
+                            } else {
+                                println!("looks like it is not {}", variant);
                             }
                         }
 

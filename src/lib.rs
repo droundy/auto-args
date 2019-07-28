@@ -69,6 +69,16 @@ pub trait AutoArgs: Sized {
             Ok(v)
         }
     }
+    /// Parse arguments given through an iterable thing such as a `Vec` or a slice, ignoring first element.
+    fn from_iter<I,T>(args: I) -> Result<Self, Error>
+        where
+        I: IntoIterator<Item = T>,
+        T: Into<OsString> + Clone,
+    {
+        let mut v: Vec<_> = args.into_iter().map(|v| v.into()).collect();
+        v.remove(0);
+        Self::parse_vec(v)
+    }
     /// For implementation, but not for using this library.
     ///
     /// Parse this flag from the arguments, and return the set of
@@ -265,7 +275,13 @@ impl AutoArgs for bool {
             }
         } else {
             println!("looking for {:?} in {:?}", key, args);
-            Ok(args.iter().filter(|v| v.to_string_lossy() == key).next().is_some())
+            if args.iter().filter(|v| v.to_string_lossy() == key).next().is_some() {
+                *args = args.iter().filter(|v| v.to_string_lossy() != key)
+                    .cloned().collect();
+                Ok(true)
+            } else {
+                Ok(false)
+            }
         }
     }
     fn tiny_help_message(key: &str) -> String {
