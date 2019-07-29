@@ -4,6 +4,13 @@ version = "0.1.0"
 authors = ["David Roundy <daveroundy@gmail.com>"]
 edition = "2018"
 
+description = "Parse command line arguments by defining a struct."
+repository = "https://github.com/droundy/auto-args"
+keywords = ["clap", "cli", "parse", "args", "argument"]
+categories = ["command-line-interface"]
+license = "Apache-2.0/MIT"
+readme = "README.md"
+
 [dependencies]
 auto-args-derive =  { path = "auto-args-derive", version = "0.1.0" }
 meval = "0.2.0"
