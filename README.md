@@ -1,4 +1,4 @@
-# AutoArgs [![Build Status](https://travis-ci.org/droundy/auto_args.svg?branch=master)](https://travis-ci.org/droundy/auto_args) [![](https://img.shields.io/crates/v/auto_args.svg)](https://crates.io/crates/auto_args) [![](https://docs.rs/auto_args/badge.svg)](https://docs.rs/auto_args)
+# AutoArgs [![Build Status](https://travis-ci.org/droundy/auto_args.svg?branch=master)](https://travis-ci.org/droundy/auto-args) [![](https://img.shields.io/crates/v/auto_args.svg)](https://crates.io/crates/auto_args) [![](https://docs.rs/auto_args/badge.svg)](https://docs.rs/auto_args)
 
 Parse command line arguments by defining a struct.  It combines
 [clap](https://crates.io/crates/clap) with custom derive.
