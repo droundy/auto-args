@@ -8,16 +8,10 @@ information you want on the command-line from the person running your
 program, and `derive(AutoArgs)` on that type, and then call
 `YourType::from_args()` to find out what your user gave you.
 
-## Relationship to clap
+## Differences from ClapMe
 
-AutoArgs uses [clap](https://clap.rs) to do the actual parsing of
-command-line flags.  This is great, because clap does an awesome job
-at providing helpful features you wouldn't even have thought of if you
-wrote your own command-line processor.  The biggest downside to using
-clap directly is that it does not nicely support translating its
-results into something you would want to use in your code, so there is
-a fair amount of repetitious calling of macros to do conversions into
-useful types.
+AutoArgs is essentially equivalent to ClapMe.  It only differs in
+implementation, speed of compilation, help messages, and error messages.
 
 ## Differences from structopt
 
