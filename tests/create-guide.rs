@@ -38,7 +38,7 @@ use std::io::{Write,BufRead};
 /// }
 ///
 /// fn main() {
-///     let opt = Opt::parse_args();
+///     let opt = Opt::from_args();
 ///     println!("{:?}", opt);
 /// }
 /// ```

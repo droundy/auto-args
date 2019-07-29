@@ -41,7 +41,7 @@ pub trait AutoArgs: Sized {
     /// Parse the command-line arguments, exiting in case of error.
     ///
     /// This is what users actually use.
-    fn parse_args() -> Self {
+    fn from_args() -> Self {
         let mut v: Vec<_> = std::env::args_os().collect();
         v.remove(0);
         if v.iter().any(|v| v == "--help") {
