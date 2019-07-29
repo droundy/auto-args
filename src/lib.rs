@@ -459,11 +459,11 @@ impl AutoArgs for Vec<f32> {
 
 impl<T> AutoArgs for std::marker::PhantomData<T> {
     const REQUIRES_INPUT: bool = false;
-    fn parse_internal(key: &str, args: &mut Vec<OsString>)
+    fn parse_internal(_key: &str, _args: &mut Vec<OsString>)
                       -> Result<Self, Error> {
         Ok(std::marker::PhantomData)
     }
-    fn tiny_help_message(key: &str) -> String {
+    fn tiny_help_message(_key: &str) -> String {
         "".to_string()
     }
 }
