@@ -1,4 +1,4 @@
-# AutoArgs [![Build Status](https://travis-ci.org/droundy/auto_args.svg?branch=master)](https://travis-ci.org/droundy/auto-args) [![](https://img.shields.io/crates/v/auto_args.svg)](https://crates.io/crates/auto_args) [![](https://docs.rs/auto_args/badge.svg)](https://docs.rs/auto_args)
+# AutoArgs [![Build Status](https://travis-ci.org/droundy/auto-args.svg?branch=master)](https://travis-ci.org/droundy/auto-args) [![](https://img.shields.io/crates/v/auto-args.svg)](https://crates.io/crates/auto-args) [![](https://docs.rs/auto-args/badge.svg)](https://docs.rs/auto-args)
 
 Parse command line arguments by defining a struct.  It combines
 [clap](https://crates.io/crates/clap) with custom derive.
@@ -16,7 +16,7 @@ implementation, speed of compilation, help messages, and error messages.
 ## Differences from structopt
 
 [StructOpt](https://docs.rs/structopt) is a tool that serves the same
-function as `auto_args`, but with a different philosophy.  StructOpt
+function as `auto-args`, but with a different philosophy.  StructOpt
 strives to be as expressive as clap, and to enable all features clap
 does, and with a tightly coupled API.  It does this by extensive use
 of attributes such as `#[structopt(long = "long-name")]`, which define
