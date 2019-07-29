@@ -123,7 +123,7 @@ For more information try --help",
 }
 
 /// A list of possible errors.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Error {
     /// An error from pico-args.
     OptionValueParsingFailed(String, String),
@@ -173,7 +173,7 @@ macro_rules! impl_from_osstr {
                 let convert = $conv;
                 if key == "" {
                     if args.len() == 0 {
-                        Err(Error::OptionWithoutAValue("".to_string()))
+                        Err(Error::MissingOption("".to_string()))
                     } else {
                         let arg = if args[0] == "--" {
                             if args.len() > 1 {
@@ -313,7 +313,19 @@ macro_rules! impl_from {
                 let the_arg = String::parse_internal(key, args)?;
                 match Self::from_str(&the_arg) {
                     Ok(val) => Ok(val),
-                    Err(e) => Err(Error::OptionValueParsingFailed(key.to_string(), e.to_string())),
+                    Err(e) => {
+                        let e = Err(Error::OptionValueParsingFailed(key.to_string(),
+                                                                    e.to_string()));
+                        if let Ok(x) = meval::eval_str(&the_arg) {
+                            if (x as $t) as f64 == x {
+                                Ok(x as $t)
+                            } else {
+                                e
+                            }
+                        } else {
+                            e
+                        }
+                    }
                 }
             }
             fn tiny_help_message(key: &str) -> String {
@@ -445,6 +457,16 @@ impl AutoArgs for Vec<f32> {
     }
 }
 
+impl<T> AutoArgs for std::marker::PhantomData<T> {
+    const REQUIRES_INPUT: bool = false;
+    fn parse_internal(key: &str, args: &mut Vec<OsString>)
+                      -> Result<Self, Error> {
+        Ok(std::marker::PhantomData)
+    }
+    fn tiny_help_message(key: &str) -> String {
+        "".to_string()
+    }
+}
 
 #[cfg(test)]
 mod tests {
