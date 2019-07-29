@@ -335,17 +335,13 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             ..
         }) => {
             quote!{
-                fn with_clap<AutoArgsT>(mut _info: auto_args::ArgInfo,
-                                app: auto_args::clap::App,
-                                f: impl FnOnce(auto_args::clap::App) -> AutoArgsT)
-                                      -> AutoArgsT {
-                    f(app)
+                const REQUIRES_INPUT: bool = false;
+                fn parse_internal(key: &str, args: &mut Vec<std::ffi::OsString>)
+                                  -> Result<Self, auto_args::Error> {
+                    Ok( #name )
                 }
-                fn from_clap<'a,'b>(_name: &str, _matches: &auto_args::clap::ArgMatches) -> Option<Self> {
-                    Some( #name )
-                }
-                fn requires_flags(_name: &str) -> Vec<String> {
-                    Vec::new()
+                fn tiny_help_message(key: &str) -> String {
+                    "".to_string()
                 }
             }
         },
