@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate auto_args;
-
 use auto_args::AutoArgs;
 
 #[derive(AutoArgs, PartialEq, Debug)]
