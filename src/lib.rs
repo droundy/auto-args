@@ -45,7 +45,7 @@ pub trait AutoArgs: Sized {
         let mut v: Vec<_> = std::env::args_os().collect();
         v.remove(0);
         if v.iter().any(|v| v == "--help") {
-            println!("{}", Self::usage());
+            println!("{}", Self::help());
             std::process::exit(0);
         }
         match Self::parse_vec(v) {
