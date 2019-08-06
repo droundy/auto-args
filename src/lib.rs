@@ -273,7 +273,6 @@ impl AutoArgs for bool {
                 }
             }
         } else {
-            println!("looking for {:?} in {:?}", key, args);
             if args.iter().filter(|v| v.to_string_lossy() == key).next().is_some() {
                 *args = args.iter().filter(|v| v.to_string_lossy() != key)
                     .cloned().collect();

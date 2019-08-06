@@ -56,14 +56,14 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e  [--foo]
+//!   create_guide-d942170b03ae4dec  [--foo]
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e  [--foo]
+//!   create_guide-d942170b03ae4dec  [--foo]
 //! 
 //!   [--foo] 
 //! 
@@ -85,14 +85,14 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e  [--verbose] [--T]
+//!   create_guide-d942170b03ae4dec  [--verbose] [--T]
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e  [--verbose] [--T]
+//!   create_guide-d942170b03ae4dec  [--verbose] [--T]
 //! 
 //!   [--verbose] Print excess messages.
 //!   [--T]       The temperature.
@@ -120,7 +120,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e  [--verbose] [--blue-is-nice-] [--min-T]
+//!   create_guide-d942170b03ae4dec  [--verbose] [--blue-is-nice-] [--min-T]
 //! 
 //!   [--verbose]       a simple word has "--" prepended to it.
 //!   [--blue-is-nice-] Underscores are replaced with "-" ...
@@ -149,7 +149,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e  --name STRING --T FLOAT --directory STRING
+//!   create_guide-d942170b03ae4dec  --name STRING --T FLOAT --directory STRING
 //! 
 //!   --name STRING      The name of the type
 //!   --T FLOAT          The temperature of the type
@@ -183,7 +183,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e  [--name STRING]
+//!   create_guide-d942170b03ae4dec  [--name STRING]
 //! 
 //!   [--name STRING] The name is an optional argument.
 //! 
@@ -215,14 +215,14 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
+//!   create_guide-d942170b03ae4dec (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
+//!   create_guide-d942170b03ae4dec (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
 //! 
 //!   EITHER               
 //!   --first-a STRING     This is the "a" value
@@ -275,7 +275,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e   --position-x FLOAT --position-y FLOAT  --velocity-x FLOAT --velocity-y FLOAT
+//!   create_guide-d942170b03ae4dec   --position-x FLOAT --position-y FLOAT  --velocity-x FLOAT --velocity-y FLOAT
 //! 
 //!   --position-x FLOAT 
 //!   --position-y FLOAT 
@@ -314,14 +314,14 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e   --name STRING  --address STRING
+//!   create_guide-d942170b03ae4dec   --name STRING  --address STRING
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-3a67694dea30bb0e   --name STRING  --address STRING
+//!   create_guide-d942170b03ae4dec   --name STRING  --address STRING
 //! 
 //!   --name STRING    The user's name
 //!   --address STRING The user's address
