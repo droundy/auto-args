@@ -187,7 +187,6 @@ macro_rules! impl_from_osstr {
                         convert(arg)
                     }
                 } else {
-                    println!("looking for {:?} in {:?}", key, args);
                     let eqthing = format!("{}=", key);
                     if let Some(i) = args.iter().position(|v| v == key || v.to_string_lossy().starts_with(&eqthing)) {
                         let thing = args.remove(i)
