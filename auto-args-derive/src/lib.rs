@@ -485,6 +485,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     };
 
     let tokens2: proc_macro2::TokenStream = quote!{
+        #[allow(unreachable_code)]
         impl#bounds auto_args::AutoArgs for #name#generics {
             #myimpl
         }
