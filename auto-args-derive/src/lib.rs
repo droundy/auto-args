@@ -62,48 +62,6 @@ fn get_doc_comment(attrs: &[syn::Attribute]) -> String {
     }
 }
 
-fn one_field_name(f: syn::Fields) -> proc_macro2::TokenStream {
-    let join_prefix = create_join_prefix();
-    match f {
-        syn::Fields::Named(ref fields) => {
-            let f: Vec<_> = fields.named.clone().into_iter().collect();
-            let names = f.iter().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
-            let types = f.iter().map(|x| x.ty.clone());
-            quote! {
-                {
-                    let mut flagname: Option<String> = None;
-                    let join_prefix = #join_prefix;
-                    #(
-                        let thisname = join_prefix(#names);
-                        let reqs = <#types as auto_args::AutoArgs>::requires_flags(&thisname);
-                        if let Some(x) = reqs.first() {
-                            flagname = Some(x.clone());
-                        }
-                    )*
-                    flagname.expect("enum must have one required field!")
-                }
-            }
-        },
-        syn::Fields::Unit => {
-            quote!{
-                _name.to_string()
-            }
-        },
-        syn::Fields::Unnamed(ref unnamed) => {
-            let f = unnamed.unnamed.iter().next().expect("we should have one field");
-            let mytype = f.ty.clone();
-            quote!{{
-                let reqs = <#mytype as auto_args::AutoArgs>::requires_flags(&_name);
-                if let Some(x) = reqs.first() {
-                    x.clone()
-                } else {
-                    panic!("enum {:?} must have one required field!", _name)
-                }
-            }}
-        },
-    }
-}
-
 fn return_with_fields(f: syn::Fields,
                       name: proc_macro2::TokenStream,
                       am_enum_variant: bool) -> proc_macro2::TokenStream {
@@ -161,7 +119,7 @@ fn return_with_fields(f: syn::Fields,
 }
 
 fn usage_with_fields(f: syn::Fields,
-                     name: proc_macro2::TokenStream,
+                     _name: proc_macro2::TokenStream,
                      am_enum_variant: bool) -> proc_macro2::TokenStream {
     let join_prefix = create_join_prefix();
     match f {
@@ -170,7 +128,6 @@ fn usage_with_fields(f: syn::Fields,
             let names = f.iter().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
             let types = f.iter().map(|x| x.ty.clone());
             let types2 = types.clone();
-            let idents = f.iter().map(|x| x.ident.clone().unwrap());
             let check_main_flag = if am_enum_variant {
                 quote!{
                     if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
@@ -211,7 +168,7 @@ fn usage_with_fields(f: syn::Fields,
 
 
 fn help_with_fields(f: syn::Fields,
-                    name: proc_macro2::TokenStream,
+                    _name: proc_macro2::TokenStream,
                     am_enum_variant: bool) -> proc_macro2::TokenStream {
     let join_prefix = create_join_prefix();
     match f {
@@ -221,7 +178,6 @@ fn help_with_fields(f: syn::Fields,
             let names = f.iter().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
             let types = f.iter().map(|x| x.ty.clone());
             let types2 = types.clone();
-            let idents = f.iter().map(|x| x.ident.clone().unwrap());
             let check_main_flag = if am_enum_variant {
                 quote!{
                     if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
