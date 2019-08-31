@@ -192,7 +192,6 @@ macro_rules! impl_from_osstr {
                         let thing = args.remove(i)
                             .into_string()
                             .map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))?;
-                        println!("thing is {:?}", thing);
                         if thing == key {
                             if args.len() > i {
                                 convert(args.remove(i))
