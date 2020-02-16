@@ -183,7 +183,7 @@ fn help_with_fields(f: syn::Fields,
                     if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
                         // Nothing special to do, something below requires input.
                     } else {
-                        doc.push_str(&format!("{} {}", _prefix, variant_doc));
+                        doc.push_str(&format!("\t{}\t{}\n", _prefix, variant_doc));
                     }
                 }
             } else {
