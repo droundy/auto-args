@@ -356,6 +356,8 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                     };
                     let orig_args = args;
+                    let mut most_used = 0;
+                    let mut best_err = Err(auto_args::Error::MissingOption("a missing thingy".to_string()));
                     #(
                         {
                             let mut args = orig_args.clone();
@@ -364,16 +366,25 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             let _prefix = format!("{}{}", _prefix, variant);
                             let mut closure = || -> Result<_, auto_args::Error> {
                                 #return_enum
-                                Err(auto_args::Error::MissingOption("ooo".to_string()))
+                                Err(auto_args::Error::MissingOption(_prefix))
                             };
-                            if let Ok(v) = closure() {
-                                *orig_args = args.clone();
-                                return Ok(v);
+                            match closure() {
+                                Ok(v) => {
+                                    *orig_args = args.clone();
+                                    return Ok(v);
+                                }
+                                Err(e) => {
+                                    let args_used = orig_args.len() - args.len();
+                                    if args_used >= most_used {
+                                        most_used = args_used;
+                                        best_err = Err(e);
+                                    }
+                                }
                             }
                         }
 
                     )*
-                    Err(auto_args::Error::MissingOption("a missing thing".to_string()))
+                    best_err
                 }
                 fn help_message(key: &str, doc: &str) -> String {
                     let _prefix = match key.chars().next() {
