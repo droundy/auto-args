@@ -1,7 +1,9 @@
 # AutoArgs [![Build Status](https://travis-ci.org/droundy/auto-args.svg?branch=master)](https://travis-ci.org/droundy/auto-args) [![](https://img.shields.io/crates/v/auto-args.svg)](https://crates.io/crates/auto-args) [![](https://docs.rs/auto-args/badge.svg)](https://docs.rs/auto-args)
 
-Parse command line arguments by defining a struct.  It combines
-[clap](https://crates.io/crates/clap) with custom derive.
+Parse command line arguments by defining a struct.  It uses a derive
+to define a set of command-line flags.  It does *not* use
+[clap](https://crates.io/crates/clap) and its dependencies are rather
+slimmer.
 
 The basic idea is that you define a type that represents the
 information you want on the command-line from the person running your
