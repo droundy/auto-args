@@ -465,7 +465,7 @@ impl<T> AutoArgs for std::marker::PhantomData<T> {
     }
 }
 
-#[cfg(test)]
+// #[cfg(test)]
 mod tests {
     use super::*;
     use crate as auto_args;

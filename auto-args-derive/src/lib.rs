@@ -87,19 +87,20 @@ fn return_with_fields(f: syn::Fields,
             quote! {
                 #check_main_flag
                 let join_prefix = #join_prefix;
-                return Ok( #name {
+                // Am in return_with_fields
+                Ok( #name {
                     #( #idents:
                         <#types as auto_args::AutoArgs>::parse_internal(&join_prefix(#names),
                                                                         args)?,  )*
-                });
+                })
             }
         },
         syn::Fields::Unit => {
             quote!{
                 if bool::parse_internal(&_prefix, args)? {
-                    return Ok( #name );
+                    Ok( #name )
                 } else {
-                    return Err(auto_args::Error::MissingOption(_prefix.clone()));
+                    Err(auto_args::Error::MissingOption(_prefix.clone()))
                 }
             }
         },
@@ -107,9 +108,7 @@ fn return_with_fields(f: syn::Fields,
             let f = unnamed.unnamed.iter().next().expect("we should have one field");
             let mytype = f.ty.clone();
             quote!{
-                if let Ok(x) = <#mytype as auto_args::AutoArgs>::parse_internal(&_prefix, args) {
-                    return Ok(#name(x));
-                }
+                <#mytype as auto_args::AutoArgs>::parse_internal(&_prefix, args).map(|x| #name(x))
             }
         },
         _ => {
@@ -356,8 +355,9 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                     };
                     let orig_args = args;
+                    let mut error_args = orig_args.clone();
                     let mut most_used = 0;
-                    let mut best_err = Err(auto_args::Error::MissingOption("a missing thingy".to_string()));
+                    let mut best_err = auto_args::Error::MissingOption("a missing thingy".to_string());
                     #(
                         {
                             let mut args = orig_args.clone();
@@ -366,7 +366,6 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             let _prefix = format!("{}{}", _prefix, variant);
                             let mut closure = || -> Result<_, auto_args::Error> {
                                 #return_enum
-                                Err(auto_args::Error::MissingOption(_prefix))
                             };
                             match closure() {
                                 Ok(v) => {
@@ -375,16 +374,19 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 }
                                 Err(e) => {
                                     let args_used = orig_args.len() - args.len();
+                                    println!("{:?} used {} args", e, args_used);
                                     if args_used >= most_used {
                                         most_used = args_used;
-                                        best_err = Err(e);
+                                        best_err = e;
+                                        error_args = args.clone();
                                     }
                                 }
                             }
                         }
 
                     )*
-                    best_err
+                    *orig_args = error_args;
+                    Err(best_err)
                 }
                 fn help_message(key: &str, doc: &str) -> String {
                     let _prefix = match key.chars().next() {

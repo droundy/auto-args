@@ -25,17 +25,20 @@ fn simple_enum() {
     assert!(EnumOpt::help().contains("--third-third "));
 
     assert_eq!(
-        EnumOpt::First { first: "hello".to_string() },
-        EnumOpt::from_iter(&["", "--first-first", "hello"]).unwrap());
+        EnumOpt::First {
+            first: "hello".to_string()
+        },
+        EnumOpt::from_iter(&["", "--first-first", "hello"]).unwrap()
+    );
 
     assert_eq!(
         EnumOpt::Second { second: 5 },
-        EnumOpt::from_iter(&["", "--second-second", "5"]).unwrap());
+        EnumOpt::from_iter(&["", "--second-second", "5"]).unwrap()
+    );
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
 
-    assert!(EnumOpt::from_iter(&["", "--first-first", "hello",
-                                 "--second-second", "5"]).is_err());
+    assert!(EnumOpt::from_iter(&["", "--first-first", "hello", "--second-second", "5"]).is_err());
 }
 
 #[test]
@@ -53,11 +56,13 @@ fn unit_enum() {
 
     assert_eq!(
         EnumOpt::First,
-        EnumOpt::from_iter(&["", "--first"]).unwrap());
+        EnumOpt::from_iter(&["", "--first"]).unwrap()
+    );
 
     assert_eq!(
         EnumOpt::Second,
-        EnumOpt::from_iter(&["", "--second"]).unwrap());
+        EnumOpt::from_iter(&["", "--second"]).unwrap()
+    );
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
 
@@ -81,15 +86,15 @@ fn unit_enum_with_underscores() {
 
     assert_eq!(
         EnumOpt::First_World,
-        EnumOpt::from_iter(&["", "--First-World"]).unwrap());
+        EnumOpt::from_iter(&["", "--First-World"]).unwrap()
+    );
 
     assert_eq!(
         EnumOpt::Second,
-        EnumOpt::from_iter(&["", "--second"]).unwrap());
+        EnumOpt::from_iter(&["", "--second"]).unwrap()
+    );
 
-    assert_eq!(
-        EnumOpt::T_,
-        EnumOpt::from_iter(&["", "--T"]).unwrap());
+    assert_eq!(EnumOpt::T_, EnumOpt::from_iter(&["", "--T"]).unwrap());
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
 
@@ -116,11 +121,13 @@ fn enum_with_singular_tuple() {
     println!("This is fun...");
     assert_eq!(
         EnumOpt::Foo(37),
-        EnumOpt::from_iter(&["", "--foo=37"]).expect("Trouble right here"));
+        EnumOpt::from_iter(&["", "--foo=37"]).expect("Trouble right here")
+    );
 
     assert_eq!(
         EnumOpt::Bar("hello".to_string()),
-        EnumOpt::from_iter(&["", "--bar=hello"]).unwrap());
+        EnumOpt::from_iter(&["", "--bar=hello"]).unwrap()
+    );
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
 
@@ -131,9 +138,7 @@ fn enum_with_singular_tuple() {
 fn enum_with_underscore_variant() {
     #[derive(AutoArgs, PartialEq, Debug)]
     enum EnumOpt {
-        _Greet {
-            hello: String,
-        },
+        _Greet { hello: String },
         Goodbye(String),
     }
     println!("help: {}", EnumOpt::help());
@@ -141,12 +146,16 @@ fn enum_with_underscore_variant() {
     assert!(EnumOpt::help().contains("--goodbye "));
 
     assert_eq!(
-        EnumOpt::_Greet { hello: "David".to_string() },
-        EnumOpt::from_iter(&["", "--hello", "David"]).unwrap());
+        EnumOpt::_Greet {
+            hello: "David".to_string()
+        },
+        EnumOpt::from_iter(&["", "--hello", "David"]).unwrap()
+    );
 
     assert_eq!(
         EnumOpt::Goodbye("David".to_string()),
-        EnumOpt::from_iter(&["", "--goodbye=David"]).unwrap());
+        EnumOpt::from_iter(&["", "--goodbye=David"]).unwrap()
+    );
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
 
@@ -157,9 +166,7 @@ fn enum_with_underscore_variant() {
 fn enum_with_nested_underscore_variant() {
     #[derive(AutoArgs, PartialEq, Debug)]
     enum EnumOpt {
-        _Greet {
-            hello: String,
-        },
+        _Greet { hello: String },
         Goodbye(String),
     }
     #[derive(AutoArgs, PartialEq, Debug)]
@@ -171,14 +178,76 @@ fn enum_with_nested_underscore_variant() {
     assert!(Opt::help().contains("--say-goodbye "));
 
     assert_eq!(
-        Opt { say: EnumOpt::_Greet { hello: "David".to_string() } },
-        Opt::from_iter(&["", "--say-hello", "David"]).unwrap());
+        Opt {
+            say: EnumOpt::_Greet {
+                hello: "David".to_string()
+            }
+        },
+        Opt::from_iter(&["", "--say-hello", "David"]).unwrap()
+    );
 
     assert_eq!(
-        Opt { say: EnumOpt::Goodbye("David".to_string()) },
-        Opt::from_iter(&["", "--say-goodbye=David"]).unwrap());
+        Opt {
+            say: EnumOpt::Goodbye("David".to_string())
+        },
+        Opt::from_iter(&["", "--say-goodbye=David"]).unwrap()
+    );
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
 
     assert!(EnumOpt::from_iter(&["", "--say-hello=David", "--say-goodbye=Goliath"]).is_err());
+}
+
+#[test]
+fn enum_missing_flag() {
+    #[derive(AutoArgs, PartialEq, Debug)]
+    enum Nested {
+        Hello { hello: String, greeting: String },
+        Goodbye(String),
+    }
+    #[derive(AutoArgs, PartialEq, Debug)]
+    enum Opt {
+        Other(Nested),
+        Nested(Nested),
+    }
+    println!("help: {}", Opt::help());
+    assert!(Opt::help().contains("--other-goodbye "));
+    assert!(Opt::help().contains("--nested-hello-hello "));
+    assert!(Opt::help().contains("--nested-hello-greeting "));
+    assert!(Opt::help().contains("--nested-goodbye "));
+
+    assert_eq!(
+        Ok(Opt::Other(Nested::Hello {
+            hello: "1".to_string(),
+            greeting: "ee".to_string(),
+        })),
+        Opt::from_iter(&[
+            "",
+            "--other-hello-hello",
+            "1",
+            "--other-hello-greeting",
+            "ee"
+        ])
+    );
+
+    assert!(Opt::from_iter(&[""]).is_err());
+
+    assert_eq!(
+        Ok(Opt::Other(Nested::Goodbye("World".to_string()))),
+        Opt::from_iter(&["", "--other-goodbye", "World"])
+    );
+
+    assert_eq!(
+        Err(auto_args::Error::MissingOption("--other-hello-greeting".to_string())),
+        Opt::from_iter(&["", "--other-hello-hello", "World"])
+    );
+    assert_eq!(
+        Err(auto_args::Error::MissingOption("--nested-goodbye".to_string())),
+        Opt::from_iter(&["--typo"])
+    );
+
+    assert_eq!(
+        Err(auto_args::Error::MissingOption("--nested-goodbye".to_string())),
+        Opt::from_iter(&["--nested-hello-hello", "World"])
+    );
 }
