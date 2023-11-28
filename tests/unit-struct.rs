@@ -19,8 +19,7 @@ fn unit_struct() {
     println!("help: {}", Unit::help());
     assert!(!Unit::help().contains("--first"));
 
-    assert_eq!(Unit,
-               Unit::from_iter(&[""]).unwrap());
+    assert_eq!(Unit, Unit::from_iter(&[""]).unwrap());
 }
 
 #[test]
@@ -34,11 +33,15 @@ fn struct_with_unit() {
     assert!(Opt::help().contains("--first"));
     assert!(!Opt::help().contains("--second"));
 
-    assert_eq!(Opt{ first: 7, second: Unit },
-               Opt::from_iter(&["","--first=7"]).unwrap());
+    assert_eq!(
+        Opt {
+            first: 7,
+            second: Unit
+        },
+        Opt::from_iter(&["", "--first=7"]).unwrap()
+    );
 
-    assert_eq!(None,
-               Opt::from_iter(&["","--first=7", "--second"]).ok());
+    assert_eq!(None, Opt::from_iter(&["", "--first=7", "--second"]).ok());
 
     assert!(Opt::from_iter(&[""]).is_err());
 

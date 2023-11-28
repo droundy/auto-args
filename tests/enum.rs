@@ -238,16 +238,22 @@ fn enum_missing_flag() {
     );
 
     assert_eq!(
-        Err(auto_args::Error::MissingOption("--other-hello-greeting".to_string())),
+        Err(auto_args::Error::MissingOption(
+            "--other-hello-greeting".to_string()
+        )),
         Opt::from_iter(&["", "--other-hello-hello", "World"])
     );
     assert_eq!(
-        Err(auto_args::Error::MissingOption("--nested-goodbye".to_string())),
+        Err(auto_args::Error::MissingOption(
+            "--nested-goodbye".to_string()
+        )),
         Opt::from_iter(&["--typo"])
     );
 
     assert_eq!(
-        Err(auto_args::Error::MissingOption("--nested-goodbye".to_string())),
+        Err(auto_args::Error::MissingOption(
+            "--nested-goodbye".to_string()
+        )),
         Opt::from_iter(&["--nested-hello-hello", "World"])
     );
 }

@@ -30,30 +30,32 @@ enum Parent {
 fn just_opt() {
     println!("help: {}", Opt::help());
     assert!(Opt::help().contains("--quiet"));
-    let parent = Opt::parse_vec(vec![
-        std::ffi::OsString::from("--foo=foo"),
-    ]).unwrap();
-    assert_eq!(Opt {
-        foo: "foo".to_string(),
-        _report: SubOpt {
-            max_iter: None,
-            quiet: false,
-        }
-    }, parent);
+    let parent = Opt::parse_vec(vec![std::ffi::OsString::from("--foo=foo")]).unwrap();
+    assert_eq!(
+        Opt {
+            foo: "foo".to_string(),
+            _report: SubOpt {
+                max_iter: None,
+                quiet: false,
+            }
+        },
+        parent
+    );
 }
 
 #[test]
 fn craziness() {
     println!("help: {}", Parent::help());
     assert!(Parent::help().contains("--quiet"));
-    let parent = Parent::parse_vec(vec![
-        std::ffi::OsString::from("--foo=foo"),
-    ]).unwrap();
-    assert_eq!(Parent::_CaseTwo(Opt {
-        foo: "foo".to_string(),
-        _report: SubOpt {
-            max_iter: None,
-            quiet: false,
-        }
-    }), parent);
+    let parent = Parent::parse_vec(vec![std::ffi::OsString::from("--foo=foo")]).unwrap();
+    assert_eq!(
+        Parent::_CaseTwo(Opt {
+            foo: "foo".to_string(),
+            _report: SubOpt {
+                max_iter: None,
+                quiet: false,
+            }
+        }),
+        parent
+    );
 }

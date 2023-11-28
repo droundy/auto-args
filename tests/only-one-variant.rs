@@ -2,9 +2,7 @@ use auto_args::AutoArgs;
 
 #[derive(AutoArgs, PartialEq, Debug)]
 enum Exclusive {
-    First {
-        a: String,
-    },
+    First { a: String },
 }
 
 #[test]

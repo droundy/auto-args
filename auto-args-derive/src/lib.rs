@@ -9,7 +9,7 @@
 //! This crate is custom derive for `AutoArgs`. It should not be used
 //! directly.
 
-#![recursion_limit="256"]
+#![recursion_limit = "256"]
 
 extern crate proc_macro;
 extern crate syn;
@@ -33,7 +33,10 @@ fn get_doc_comment(attrs: &[syn::Attribute]) -> String {
         .filter_map(|attr| {
             use Lit::*;
             use Meta::*;
-            if let NameValue(MetaNameValue {path, lit: Str(s), ..}) = attr {
+            if let NameValue(MetaNameValue {
+                path, lit: Str(s), ..
+            }) = attr
+            {
                 if !path.is_ident("doc") {
                     return None;
                 }
@@ -62,19 +65,23 @@ fn get_doc_comment(attrs: &[syn::Attribute]) -> String {
     }
 }
 
-fn return_with_fields(f: syn::Fields,
-                      name: proc_macro2::TokenStream,
-                      am_enum_variant: bool) -> proc_macro2::TokenStream {
+fn return_with_fields(
+    f: syn::Fields,
+    name: proc_macro2::TokenStream,
+    am_enum_variant: bool,
+) -> proc_macro2::TokenStream {
     let join_prefix = create_join_prefix();
     match f {
         syn::Fields::Named(ref fields) => {
             let f: Vec<_> = fields.named.clone().into_iter().collect();
-            let names = f.iter().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
+            let names = f
+                .iter()
+                .map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
             let types = f.iter().map(|x| x.ty.clone());
             let types2 = types.clone();
             let idents = f.iter().map(|x| x.ident.clone().unwrap());
             let check_main_flag = if am_enum_variant {
-                quote!{
+                quote! {
                     if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
                         // Nothing special to do, something below requires input.
                     } else if !bool::parse_internal(&_prefix, args)? {
@@ -82,7 +89,7 @@ fn return_with_fields(f: syn::Fields,
                     }
                 }
             } else {
-                quote!{}
+                quote! {}
             };
             quote! {
                 #check_main_flag
@@ -94,41 +101,49 @@ fn return_with_fields(f: syn::Fields,
                                                                         args)?,  )*
                 })
             }
-        },
+        }
         syn::Fields::Unit => {
-            quote!{
+            quote! {
                 if bool::parse_internal(&_prefix, args)? {
                     Ok( #name )
                 } else {
                     Err(auto_args::Error::MissingOption(_prefix.clone()))
                 }
             }
-        },
+        }
         syn::Fields::Unnamed(ref unnamed) if unnamed.unnamed.len() == 1 => {
-            let f = unnamed.unnamed.iter().next().expect("we should have one field");
+            let f = unnamed
+                .unnamed
+                .iter()
+                .next()
+                .expect("we should have one field");
             let mytype = f.ty.clone();
-            quote!{
+            quote! {
                 <#mytype as auto_args::AutoArgs>::parse_internal(&_prefix, args).map(|x| #name(x))
             }
-        },
+        }
         _ => {
             panic!("AutoArgs only supports named fields so far!")
-        },
+        }
     }
 }
 
-fn usage_with_fields(f: syn::Fields,
-                     _name: proc_macro2::TokenStream,
-                     am_enum_variant: bool) -> proc_macro2::TokenStream {
+fn usage_with_fields(
+    f: syn::Fields,
+    _name: proc_macro2::TokenStream,
+    am_enum_variant: bool,
+) -> proc_macro2::TokenStream {
     let join_prefix = create_join_prefix();
     match f {
         syn::Fields::Named(ref fields) => {
             let f: Vec<_> = fields.named.clone().into_iter().collect();
-            let names = f.iter().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
+            let names = f
+                .iter()
+                .map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
             let types = f.iter().map(|x| x.ty.clone());
             let types2 = types.clone();
             let check_main_flag = if am_enum_variant {
-                quote!{
+                quote! {
                     if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
                         // Nothing special to do, something below requires input.
                     } else {
@@ -136,7 +151,7 @@ fn usage_with_fields(f: syn::Fields,
                     }
                 }
             } else {
-                quote!{}
+                quote! {}
             };
             quote! {
                 let mut doc = String::new();
@@ -148,37 +163,44 @@ fn usage_with_fields(f: syn::Fields,
                 )*
                 doc
             }
-        },
+        }
         syn::Fields::Unit => {
-            quote!( _prefix.clone() )
-        },
+            quote!(_prefix.clone())
+        }
         syn::Fields::Unnamed(ref unnamed) if unnamed.unnamed.len() == 1 => {
-            let f = unnamed.unnamed.iter().next().expect("we should have one field");
+            let f = unnamed
+                .unnamed
+                .iter()
+                .next()
+                .expect("we should have one field");
             let mytype = f.ty.clone();
-            quote!{
+            quote! {
                 <#mytype as auto_args::AutoArgs>::tiny_help_message(&_prefix)
             }
-        },
+        }
         _ => {
             panic!("AutoArgs only supports named fields so far!")
-        },
+        }
     }
 }
 
-
-fn help_with_fields(f: syn::Fields,
-                    _name: proc_macro2::TokenStream,
-                    am_enum_variant: bool) -> proc_macro2::TokenStream {
+fn help_with_fields(
+    f: syn::Fields,
+    _name: proc_macro2::TokenStream,
+    am_enum_variant: bool,
+) -> proc_macro2::TokenStream {
     let join_prefix = create_join_prefix();
     match f {
         syn::Fields::Named(ref fields) => {
             let f: Vec<_> = fields.named.clone().into_iter().collect();
             let docs: Vec<_> = f.iter().map(|x| get_doc_comment(&x.attrs)).collect();
-            let names = f.iter().map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
+            let names = f
+                .iter()
+                .map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
             let types = f.iter().map(|x| x.ty.clone());
             let types2 = types.clone();
             let check_main_flag = if am_enum_variant {
-                quote!{
+                quote! {
                     if #( <#types2 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false {
                         // Nothing special to do, something below requires input.
                     } else {
@@ -186,7 +208,7 @@ fn help_with_fields(f: syn::Fields,
                     }
                 }
             } else {
-                quote!{}
+                quote! {}
             };
             quote! {
                 let mut doc = String::new();
@@ -201,25 +223,29 @@ fn help_with_fields(f: syn::Fields,
                 )*
                 doc
             }
-        },
+        }
         syn::Fields::Unit => {
-            quote!( format!("\t{}\t{}\n", _prefix, variant_doc) )
-        },
+            quote!(format!("\t{}\t{}\n", _prefix, variant_doc))
+        }
         syn::Fields::Unnamed(ref unnamed) if unnamed.unnamed.len() == 1 => {
-            let f = unnamed.unnamed.iter().next().expect("we should have one field");
+            let f = unnamed
+                .unnamed
+                .iter()
+                .next()
+                .expect("we should have one field");
             let mytype = f.ty.clone();
-            quote!{
+            quote! {
                 <#mytype as auto_args::AutoArgs>::help_message(&_prefix, &variant_doc)
             }
-        },
+        }
         _ => {
             panic!("AutoArgs only supports named fields so far!")
-        },
+        }
     }
 }
 
 fn create_join_prefix() -> proc_macro2::TokenStream {
-    quote!{
+    quote! {
         move |name: &str| -> String {
             if name.len() == 0 {
                 let mut x = _prefix.to_string();
@@ -234,7 +260,7 @@ fn create_join_prefix() -> proc_macro2::TokenStream {
     }
 }
 fn create_find_prefix() -> proc_macro2::TokenStream {
-    quote!{
+    quote! {
         match key.chars().next() {
             None | Some('_') => "--".to_string(),
             _ => match key.chars().last() {
@@ -261,13 +287,13 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         }) => {
             let f: Vec<_> = fields.named.clone().into_iter().collect();
             let types3 = f.iter().rev().map(|x| x.ty.clone());
-            let return_struct = return_with_fields(syn::Fields::Named(fields.clone()),
-                                                   quote!(#name), false);
-            let usage_struct = usage_with_fields(syn::Fields::Named(fields.clone()),
-                                                 quote!(#name), false);
-            let help_struct = help_with_fields(syn::Fields::Named(fields.clone()),
-                                               quote!(#name), false);
-            quote!{
+            let return_struct =
+                return_with_fields(syn::Fields::Named(fields.clone()), quote!(#name), false);
+            let usage_struct =
+                usage_with_fields(syn::Fields::Named(fields.clone()), quote!(#name), false);
+            let help_struct =
+                help_with_fields(syn::Fields::Named(fields.clone()), quote!(#name), false);
+            quote! {
                 const REQUIRES_INPUT: bool = #(
                     <#types3 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false;
                 fn parse_internal(key: &str, args: &mut Vec<std::ffi::OsString>)
@@ -284,12 +310,12 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #help_struct
                 }
             }
-        },
+        }
         Struct(DataStruct {
             fields: syn::Fields::Unit,
             ..
         }) => {
-            quote!{
+            quote! {
                 const REQUIRES_INPUT: bool = false;
                 fn parse_internal(key: &str, args: &mut Vec<std::ffi::OsString>)
                                   -> Result<Self, auto_args::Error> {
@@ -299,7 +325,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     "".to_string()
                 }
             }
-        },
+        }
         Struct(DataStruct {
             fields: syn::Fields::Unnamed(ref unnamed),
             ..
@@ -307,9 +333,13 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             if unnamed.unnamed.len() != 1 {
                 panic!("AutoArgs does not handle tuple structs with more than one field");
             }
-            let f = unnamed.unnamed.iter().next().expect("There should be a field here!");
+            let f = unnamed
+                .unnamed
+                .iter()
+                .next()
+                .expect("There should be a field here!");
             let mytype = f.ty.clone();
-            quote!{
+            quote! {
                 const REQUIRES_INPUT: bool =
                     <#mytype as auto_args::AutoArgs>::REQUIRES_INPUT;
                 fn parse_internal(key: &str, args: &mut Vec<std::ffi::OsString>)
@@ -321,11 +351,19 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     "fixme unnamed".to_string()
                 }
             }
-        },
+        }
         Enum(ref e) => {
             let v: Vec<_> = e.variants.iter().collect();
-            let vnames: Vec<_> = e.variants.iter().map(|v| camel_case_to_kebab(&v.ident.to_string())).collect();
-            let variant_docs: Vec<_> = e.variants.iter().map(|v| get_doc_comment(&v.attrs)).collect();
+            let vnames: Vec<_> = e
+                .variants
+                .iter()
+                .map(|v| camel_case_to_kebab(&v.ident.to_string()))
+                .collect();
+            let variant_docs: Vec<_> = e
+                .variants
+                .iter()
+                .map(|v| get_doc_comment(&v.attrs))
+                .collect();
             let vnames = &vnames;
             // println!("variant names are {:?}", names);
             let return_enum = v.iter().map(|v| {
@@ -334,13 +372,11 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             });
             let helps = v.iter().map(|v| {
                 let variant_name = v.ident.clone();
-                help_with_fields(v.fields.clone(),
-                                 quote!(#name::#variant_name), true)
+                help_with_fields(v.fields.clone(), quote!(#name::#variant_name), true)
             });
             let usages = v.iter().map(|v| {
                 let variant_name = v.ident.clone();
-                usage_with_fields(v.fields.clone(),
-                                  quote!(#name::#variant_name), true)
+                usage_with_fields(v.fields.clone(), quote!(#name::#variant_name), true)
             });
             let s = quote! {
                 const REQUIRES_INPUT: bool = true;
@@ -444,16 +480,16 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             };
             s
-        },
+        }
         _ => panic!("AutoArgs only supports non-tuple structs"),
     };
 
     let generic_types = input.generics.type_params();
-    let bounds = quote!{
+    let bounds = quote! {
         <#(#generic_types: auto_args::AutoArgs),*>
     };
 
-    let tokens2: proc_macro2::TokenStream = quote!{
+    let tokens2: proc_macro2::TokenStream = quote! {
         #[allow(unreachable_code)]
         impl#bounds auto_args::AutoArgs for #name#generics {
             #myimpl

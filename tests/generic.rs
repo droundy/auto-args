@@ -20,8 +20,12 @@ fn simple_generic() {
     assert!(<GenericOpt<i32>>::help().contains("--second"));
 
     assert_eq!(
-        GenericOpt::<i32> { first: 3, second: "hello".to_string() },
-        <GenericOpt<i32>>::from_iter(&["", "--first", "3","--second=hello"]).unwrap());
+        GenericOpt::<i32> {
+            first: 3,
+            second: "hello".to_string()
+        },
+        <GenericOpt<i32>>::from_iter(&["", "--first", "3", "--second=hello"]).unwrap()
+    );
 
     assert!(<GenericOpt<i32>>::from_iter(&[""]).is_err());
 }
@@ -38,12 +42,20 @@ fn optional_generic() {
     assert!(<GenericOpt<i32>>::help().contains("--second"));
 
     assert_eq!(
-        GenericOpt::<i32> { first: Some(3), second: "hello".to_string() },
-        <GenericOpt<i32>>::from_iter(&["", "--first", "3","--second=hello"]).unwrap());
+        GenericOpt::<i32> {
+            first: Some(3),
+            second: "hello".to_string()
+        },
+        <GenericOpt<i32>>::from_iter(&["", "--first", "3", "--second=hello"]).unwrap()
+    );
 
     assert_eq!(
-        GenericOpt::<i32> { first: None, second: "hello".to_string() },
-        <GenericOpt<i32>>::from_iter(&["", "--second=hello"]).unwrap());
+        GenericOpt::<i32> {
+            first: None,
+            second: "hello".to_string()
+        },
+        <GenericOpt<i32>>::from_iter(&["", "--second=hello"]).unwrap()
+    );
 
     assert!(<GenericOpt<i32>>::from_iter(&[""]).is_err());
 }

@@ -1,10 +1,18 @@
 #![deny(missing_docs)]
 
-//! This crate enables you to create a command-line interface by
-//! defining a struct to hold your options.
+//! This crate enables you to create a command-line interface by defining a
+//! struct to hold your options.
+//! 
+//! # Features
+//! 
+//! * `meval` - enables parsing of numbers using the
+//!   [meval](https://docs.rs/meval/latest/meval/) crate.  This crate isn't well
+//!   maintained, but does enable specifying numbers in a variety of cool ways.
 
 use std::ffi::OsString;
 use std::path::PathBuf;
+#[cfg(not(feature = "meval"))]
+use std::str::FromStr;
 
 pub mod guide;
 
@@ -18,18 +26,25 @@ fn align_tabs(inp: &str) -> String {
     for l in inp.lines() {
         let v: Vec<_> = l.splitn(3, '\t').collect();
         if v.len() > 2 {
-            stop1 = std::cmp::max(stop1, v[0].len()+2);
-            stop2 = std::cmp::max(stop2, v[1].len()+1);
+            stop1 = std::cmp::max(stop1, v[0].len() + 2);
+            stop2 = std::cmp::max(stop2, v[1].len() + 1);
         }
     }
     // We now know where to align the columns.
     for l in inp.lines() {
         let v: Vec<_> = l.splitn(3, '\t').collect();
         if v.len() > 2 {
-            out.push_str(&format!("{:a$}{:b$}{}\n", v[0], v[1], v[2],
-                                  a = stop1, b = stop2));
+            out.push_str(&format!(
+                "{:a$}{:b$}{}\n",
+                v[0],
+                v[1],
+                v[2],
+                a = stop1,
+                b = stop2
+            ));
         } else {
-            out.push_str(l); out.push('\n');
+            out.push_str(l);
+            out.push('\n');
         }
     }
     out
@@ -70,8 +85,8 @@ pub trait AutoArgs: Sized {
         }
     }
     /// Parse arguments given through an iterable thing such as a `Vec` or a slice, ignoring first element.
-    fn from_iter<I,T>(args: I) -> Result<Self, Error>
-        where
+    fn from_iter<I, T>(args: I) -> Result<Self, Error>
+    where
         I: IntoIterator<Item = T>,
         T: Into<OsString> + Clone,
     {
@@ -99,26 +114,42 @@ pub trait AutoArgs: Sized {
     }
     /// Usage text for the actual command
     fn usage() -> String {
-        format!("USAGE:
+        format!(
+            "USAGE:
   {} {}
 
 For more information try --help",
-                std::env::args_os().next().unwrap().to_string_lossy()
-                .rsplit("/").next().unwrap().to_string(),
-                Self::tiny_help_message(""))
+            std::env::args_os()
+                .next()
+                .unwrap()
+                .to_string_lossy()
+                .rsplit("/")
+                .next()
+                .unwrap()
+                .to_string(),
+            Self::tiny_help_message("")
+        )
     }
     /// Help text for the actual command
     fn help() -> String {
-        format!("USAGE:
+        format!(
+            "USAGE:
   {} {}
 
 {}
 
 For more information try --help",
-                std::env::args_os().next().unwrap().to_string_lossy()
-                .rsplit("/").next().unwrap().to_string(),
-                Self::tiny_help_message(""),
-                align_tabs(&Self::help_message("", "")))
+            std::env::args_os()
+                .next()
+                .unwrap()
+                .to_string_lossy()
+                .rsplit("/")
+                .next()
+                .unwrap()
+                .to_string(),
+            Self::tiny_help_message(""),
+            align_tabs(&Self::help_message("", ""))
+        )
     }
 }
 
@@ -144,7 +175,7 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Error::OptionValueParsingFailed(key,e) => {
+            Error::OptionValueParsingFailed(key, e) => {
                 write!(f, "error parsing option '{}': {}", key, e)
             }
             Error::MissingOption(key) => {
@@ -188,8 +219,12 @@ macro_rules! impl_from_osstr {
                     }
                 } else {
                     let eqthing = format!("{}=", key);
-                    if let Some(i) = args.iter().position(|v| v == key || v.to_string_lossy().starts_with(&eqthing)) {
-                        let thing = args.remove(i)
+                    if let Some(i) = args
+                        .iter()
+                        .position(|v| v == key || v.to_string_lossy().starts_with(&eqthing))
+                    {
+                        let thing = args
+                            .remove(i)
                             .into_string()
                             .map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))?;
                         if thing == key {
@@ -217,8 +252,7 @@ macro_rules! impl_from_osstr {
 
         impl AutoArgs for Vec<$t> {
             const REQUIRES_INPUT: bool = false;
-            fn parse_internal(key: &str, args: &mut Vec<OsString>)
-                              -> Result<Self, Error> {
+            fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
                 let mut res: Self = Vec::new();
                 loop {
                     match <$t>::parse_internal(key, args) {
@@ -242,11 +276,13 @@ macro_rules! impl_from_osstr {
                 }
             }
         }
-    }
+    };
 }
 
 impl_from_osstr!(String, "STRING", |osstring: OsString| {
-    osstring.into_string().map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))
+    osstring
+        .into_string()
+        .map_err(|e| Error::InvalidUTF8(format!("{:?}", e)))
 });
 impl_from_osstr!(PathBuf, "PATH", |osstring: OsString| {
     Ok(osstring.into())
@@ -272,9 +308,17 @@ impl AutoArgs for bool {
                 }
             }
         } else {
-            if args.iter().filter(|v| v.to_string_lossy() == key).next().is_some() {
-                *args = args.iter().filter(|v| v.to_string_lossy() != key)
-                    .cloned().collect();
+            if args
+                .iter()
+                .filter(|v| v.to_string_lossy() == key)
+                .next()
+                .is_some()
+            {
+                *args = args
+                    .iter()
+                    .filter(|v| v.to_string_lossy() != key)
+                    .cloned()
+                    .collect();
                 Ok(true)
             } else {
                 Ok(false)
@@ -304,16 +348,18 @@ macro_rules! impl_from {
     ($t:ty, $tyname:expr) => {
         impl AutoArgs for $t {
             const REQUIRES_INPUT: bool = true;
-            fn parse_internal(key: &str, args: &mut Vec<OsString>)
-                              -> Result<Self, Error> {
+            fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
                 use std::str::FromStr;
                 let the_arg = String::parse_internal(key, args)?;
                 match Self::from_str(&the_arg) {
                     Ok(val) => Ok(val),
                     Err(e) => {
-                        let e = Err(Error::OptionValueParsingFailed(key.to_string(),
-                                                                    e.to_string()));
-                        if let Ok(x) = meval::eval_str(&the_arg) {
+                        let e = Err(Error::OptionValueParsingFailed(
+                            key.to_string(),
+                            e.to_string(),
+                        ));
+                        #[cfg(feature = "meval")]
+                        let out = if let Ok(x) = meval::eval_str(&the_arg) {
                             if (x as $t) as f64 == x {
                                 Ok(x as $t)
                             } else {
@@ -321,7 +367,10 @@ macro_rules! impl_from {
                             }
                         } else {
                             e
-                        }
+                        };
+                        #[cfg(not(feature = "meval"))]
+                        let out = e;
+                        out
                     }
                 }
             }
@@ -336,8 +385,7 @@ macro_rules! impl_from {
 
         impl AutoArgs for Vec<$t> {
             const REQUIRES_INPUT: bool = false;
-            fn parse_internal(key: &str, args: &mut Vec<OsString>)
-                              -> Result<Self, Error> {
+            fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
                 let mut res: Self = Vec::new();
                 loop {
                     match <$t>::parse_internal(key, args) {
@@ -361,7 +409,7 @@ macro_rules! impl_from {
                 }
             }
         }
-    }
+    };
 }
 
 impl_from!(u8, "u8");
@@ -378,11 +426,15 @@ impl_from!(isize, "isize");
 
 impl AutoArgs for f64 {
     const REQUIRES_INPUT: bool = true;
-    fn parse_internal(key: &str, args: &mut Vec<OsString>)
-                      -> Result<Self, Error> {
+    fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
         let the_arg = String::parse_internal(key, args)?;
-        meval::eval_str(the_arg)
-            .map_err(|e| Error::OptionValueParsingFailed(key.to_string(), e.to_string()))
+        #[cfg(feature = "meval")]
+        let value = meval::eval_str(the_arg)
+            .map_err(|e| Error::OptionValueParsingFailed(key.to_string(), e.to_string()));
+        #[cfg(not(feature = "meval"))]
+        let value = f64::from_str(&the_arg)
+            .map_err(|e| Error::OptionValueParsingFailed(key.to_string(), e.to_string()));
+        value
     }
     fn tiny_help_message(key: &str) -> String {
         if key == "" {
@@ -395,8 +447,7 @@ impl AutoArgs for f64 {
 
 impl AutoArgs for Vec<f64> {
     const REQUIRES_INPUT: bool = false;
-    fn parse_internal(key: &str, args: &mut Vec<OsString>)
-                      -> Result<Self, Error> {
+    fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
         let mut res: Self = Vec::new();
         loop {
             match <f64>::parse_internal(key, args) {
@@ -416,14 +467,11 @@ impl AutoArgs for Vec<f64> {
         format!("{} ...", f64::tiny_help_message(key))
     }
 }
+
 impl AutoArgs for f32 {
     const REQUIRES_INPUT: bool = true;
-    fn parse_internal(key: &str, args: &mut Vec<OsString>)
-                      -> Result<Self, Error> {
-        let the_arg = String::parse_internal(key, args)?;
-        meval::eval_str(the_arg)
-            .map(|v| v as f32)
-            .map_err(|e| Error::OptionValueParsingFailed(key.to_string(), e.to_string()))
+    fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
+        f64::parse_internal(key, args).map(|v| v as f32)
     }
     fn tiny_help_message(key: &str) -> String {
         f64::tiny_help_message(key)
@@ -432,8 +480,7 @@ impl AutoArgs for f32 {
 
 impl AutoArgs for Vec<f32> {
     const REQUIRES_INPUT: bool = false;
-    fn parse_internal(key: &str, args: &mut Vec<OsString>)
-                      -> Result<Self, Error> {
+    fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
         let mut res: Self = Vec::new();
         loop {
             match <f32>::parse_internal(key, args) {
@@ -456,8 +503,7 @@ impl AutoArgs for Vec<f32> {
 
 impl<T> AutoArgs for std::marker::PhantomData<T> {
     const REQUIRES_INPUT: bool = false;
-    fn parse_internal(_key: &str, _args: &mut Vec<OsString>)
-                      -> Result<Self, Error> {
+    fn parse_internal(_key: &str, _args: &mut Vec<OsString>) -> Result<Self, Error> {
         Ok(std::marker::PhantomData)
     }
     fn tiny_help_message(_key: &str) -> String {
@@ -465,19 +511,23 @@ impl<T> AutoArgs for std::marker::PhantomData<T> {
     }
 }
 
-// #[cfg(test)]
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate as auto_args;
-    fn should_parse<T: PartialEq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
-                                                               key: &'static str,
-                                                               result: T) {
+    fn should_parse<T: PartialEq + AutoArgs + std::fmt::Debug>(
+        args: &'static [&'static str],
+        key: &'static str,
+        result: T,
+    ) {
         let mut args: Vec<_> = args.iter().map(|s| OsString::from(s)).collect();
         assert_eq!(T::parse_internal(key, &mut args).unwrap(), result);
     }
-    fn should_parse_completely<T: PartialEq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
-                                                               key: &'static str,
-                                                               result: T) {
+    fn should_parse_completely<T: PartialEq + AutoArgs + std::fmt::Debug>(
+        args: &'static [&'static str],
+        key: &'static str,
+        result: T,
+    ) {
         let mut args: Vec<_> = args.iter().map(|s| OsString::from(s)).collect();
         assert_eq!(T::parse_internal(key, &mut args).unwrap(), result);
         if args.len() != 0 {
@@ -486,8 +536,10 @@ mod tests {
         }
     }
 
-    fn shouldnt_parse<T: PartialEq + AutoArgs + std::fmt::Debug>(args: &'static [&'static str],
-                                                                 key: &'static str) {
+    fn shouldnt_parse<T: PartialEq + AutoArgs + std::fmt::Debug>(
+        args: &'static [&'static str],
+        key: &'static str,
+    ) {
         let mut args: Vec<_> = args.iter().map(|s| OsString::from(s)).collect();
         assert!(T::parse_internal(key, &mut args).is_err());
     }
@@ -507,8 +559,11 @@ mod tests {
     #[test]
     fn hello_list() {
         let flags = &["--hello", "big", "--hello", "bad", "--hello", "wolf"];
-        should_parse(flags, "--hello",
-                     vec!["big".to_string(), "bad".to_string(), "wolf".to_string()]);
+        should_parse(
+            flags,
+            "--hello",
+            vec!["big".to_string(), "bad".to_string(), "wolf".to_string()],
+        );
         shouldnt_parse::<String>(flags, "--helloo");
         shouldnt_parse::<u8>(flags, "--hello");
     }
@@ -546,6 +601,7 @@ mod tests {
     fn arg_f64() {
         let flags = &["--hello=3e13", "--goodbye", "2^10", "--bad"];
         should_parse(flags, "--hello", 3e13);
+        #[cfg(feature = "meval")]
         should_parse(flags, "--goodbye", 1024.0);
         shouldnt_parse::<String>(flags, "--helloo");
         shouldnt_parse::<u32>(flags, "--hello");
@@ -566,14 +622,30 @@ mod tests {
     #[test]
     fn derive_test() {
         println!("help:\n{}", Test::help_message("", "this is the help"));
-        println!("help prefix --foo:\n{}", Test::help_message("--foo", "this is the help"));
+        println!(
+            "help prefix --foo:\n{}",
+            Test::help_message("--foo", "this is the help")
+        );
         let flags = &["--a=foo", "--b", "bar"];
-        should_parse_completely(flags, "", Test { a: "foo".to_string(), b: "bar".to_string() });
+        should_parse_completely(
+            flags,
+            "",
+            Test {
+                a: "foo".to_string(),
+                b: "bar".to_string(),
+            },
+        );
         shouldnt_parse::<String>(flags, "--helloo");
 
         let foo_flags = &["--foo-a=foo", "--foo-b", "bar"];
-        should_parse_completely(foo_flags, "--foo",
-                                Test { a: "foo".to_string(), b: "bar".to_string() });
+        should_parse_completely(
+            foo_flags,
+            "--foo",
+            Test {
+                a: "foo".to_string(),
+                b: "bar".to_string(),
+            },
+        );
         shouldnt_parse::<Test>(foo_flags, "");
     }
     #[derive(AutoArgs, PartialEq, Debug)]
@@ -583,71 +655,107 @@ mod tests {
     }
     #[test]
     fn derive_test_pair() {
-        println!("help:\n{}", Pair::<Test>::help_message("", "this is the help"));
-        let flags = &["--first-a=a1", "--first-b", "b1",
-                      "--second-a", "a2", "--second-b", "b2"];
-        should_parse_completely(flags, "", Pair {
-            first: Test { a: "a1".to_string(), b: "b1".to_string() },
-            second: Test { a: "a2".to_string(), b: "b2".to_string() },
-        });
+        println!(
+            "help:\n{}",
+            Pair::<Test>::help_message("", "this is the help")
+        );
+        let flags = &[
+            "--first-a=a1",
+            "--first-b",
+            "b1",
+            "--second-a",
+            "a2",
+            "--second-b",
+            "b2",
+        ];
+        should_parse_completely(
+            flags,
+            "",
+            Pair {
+                first: Test {
+                    a: "a1".to_string(),
+                    b: "b1".to_string(),
+                },
+                second: Test {
+                    a: "a2".to_string(),
+                    b: "b2".to_string(),
+                },
+            },
+        );
         shouldnt_parse::<String>(flags, "--helloo");
         assert!(!Pair::<Option<String>>::REQUIRES_INPUT);
         assert!(Pair::<String>::REQUIRES_INPUT);
     }
     #[derive(AutoArgs, PartialEq, Debug)]
-    enum Either<A,B> {
+    enum Either<A, B> {
         Left(A),
         Right(B),
     }
     #[test]
     fn derive_either() {
         let flags = &["--left", "37"];
-        should_parse_completely(flags, "", Either::<u8,u16>::Left(37u8));
+        should_parse_completely(flags, "", Either::<u8, u16>::Left(37u8));
     }
     #[test]
     fn derive_pair_either() {
         let flags = &["--first-left", "37", "--second-right", "3"];
-        should_parse_completely(flags, "", Pair {
-            first: Either::Left(37),
-            second: Either::Right(3),
-        });
+        should_parse_completely(
+            flags,
+            "",
+            Pair {
+                first: Either::Left(37),
+                second: Either::Right(3),
+            },
+        );
     }
     #[test]
     fn derive_either_either() {
         let flags = &["--right-left", "37"];
-        should_parse_completely(flags, "", Either::<u32,Either<u8,u16>>::Right(Either::Left(37)));
+        should_parse_completely(
+            flags,
+            "",
+            Either::<u32, Either<u8, u16>>::Right(Either::Left(37)),
+        );
     }
     #[test]
     fn derive_either_option() {
         let flags = &["--right-left", "7"];
-        should_parse_completely(flags, "",
-                                Either::<u32,Either<u8,Option<u32>>>::Right(Either::Left(7)));
+        should_parse_completely(
+            flags,
+            "",
+            Either::<u32, Either<u8, Option<u32>>>::Right(Either::Left(7)),
+        );
 
         let flags = &["--right-right"];
-        should_parse_completely(flags, "",
-                                Either::<u32,Either<u8,Option<u32>>>::Right(Either::Right(None)));
+        should_parse_completely(
+            flags,
+            "",
+            Either::<u32, Either<u8, Option<u32>>>::Right(Either::Right(None)),
+        );
 
         let flags = &["--right-right", "5"];
-        should_parse_completely(flags, "",
-                                Either::<u32,Either<u8,Option<u32>>>::Right(Either::Right(Some(5))));
+        should_parse_completely(
+            flags,
+            "",
+            Either::<u32, Either<u8, Option<u32>>>::Right(Either::Right(Some(5))),
+        );
     }
     #[derive(AutoArgs, PartialEq, Debug)]
     enum MyEnum {
-        Hello {
-            foo: String,
-            bar: u8,
-        },
-        _Goodbye {
-            baz: String
-        },
+        Hello { foo: String, bar: u8 },
+        _Goodbye { baz: String },
     }
     #[test]
     fn derive_myenum() {
         let flags = &["--hello-foo", "good", "--hello-bar", "7"];
-        should_parse(flags, "", MyEnum::Hello {
-            foo: "good".to_string(),
-            bar: 7,
-        });
+        should_parse(
+            flags,
+            "",
+            MyEnum::Hello {
+                foo: "good".to_string(),
+                bar: 7,
+            },
+        );
     }
     #[test]
     fn option() {

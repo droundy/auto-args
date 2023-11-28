@@ -15,8 +15,7 @@ fn tuple_struct() {
     println!("help: {}", Opt::help());
     assert!(!Opt::help().contains("--first"));
 
-    assert_eq!(Opt(7),
-               Opt::from_iter(&["","7"]).unwrap());
+    assert_eq!(Opt(7), Opt::from_iter(&["", "7"]).unwrap());
 
     assert!(Opt::from_iter(&[""]).is_err());
 
@@ -30,6 +29,5 @@ fn unit_struct() {
     println!("help: {}", Opt::help());
     assert!(!Opt::help().contains("--first"));
 
-    assert_eq!(Opt,
-               Opt::from_iter(&[""]).unwrap());
+    assert_eq!(Opt, Opt::from_iter(&[""]).unwrap());
 }

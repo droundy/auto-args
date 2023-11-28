@@ -10,14 +10,9 @@ use auto_args::AutoArgs;
 
 #[derive(Debug, AutoArgs, PartialEq, Eq)]
 enum Params {
-    First {
-        name: Option<String>,
-    },
-    Second {
-        values: Vec<usize>,
-    },
+    First { name: Option<String> },
+    Second { values: Vec<usize> },
 }
-
 
 #[test]
 fn craziness() {
@@ -25,10 +20,17 @@ fn craziness() {
     assert!(!Option::<String>::REQUIRES_INPUT);
     assert!(Params::help().contains("--first-name "));
     assert!(Params::help().contains("--first "));
-    assert_eq!(Ok(Params::First { name: None }), Params::from_iter(&["", "--first"]));
-    assert_eq!(Ok(Params::Second { values: Vec::new() }),
-               Params::from_iter(&["", "--second"]));
-    assert_eq!(Ok(Params::Second { values: vec![1] }),
-               Params::from_iter(&["", "--second", "--second-values", "1"]));
+    assert_eq!(
+        Ok(Params::First { name: None }),
+        Params::from_iter(&["", "--first"])
+    );
+    assert_eq!(
+        Ok(Params::Second { values: Vec::new() }),
+        Params::from_iter(&["", "--second"])
+    );
+    assert_eq!(
+        Ok(Params::Second { values: vec![1] }),
+        Params::from_iter(&["", "--second", "--second-values", "1"])
+    );
     assert!(Params::from_iter(&["", "--second-values"]).is_err());
 }

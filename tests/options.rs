@@ -17,13 +17,9 @@ fn required_option() {
     struct Opt {
         arg: i32,
     }
-    assert!(
-        Opt::help().contains("--arg")
-    );
+    assert!(Opt::help().contains("--arg"));
 
-    assert_eq!(
-        Opt { arg: 7 },
-        Opt::from_iter(&["", "--arg", "7"]).unwrap());
+    assert_eq!(Opt { arg: 7 }, Opt::from_iter(&["", "--arg", "7"]).unwrap());
 
     assert!(Opt::from_iter(&["", "--arg"]).is_err());
 }

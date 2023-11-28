@@ -16,20 +16,15 @@ fn unique_flag() {
         alice: bool,
     }
 
-    assert!(
-        Opt::help().contains("--alice")
-    );
-    assert!(
-        Opt::help().contains("Documentation for alice")
-    );
+    assert!(Opt::help().contains("--alice"));
+    assert!(Opt::help().contains("Documentation for alice"));
 
     assert_eq!(
         Opt { alice: true },
-        Opt::from_iter(&["", "--alice"]).unwrap());
+        Opt::from_iter(&["", "--alice"]).unwrap()
+    );
 
-    assert_eq!(
-        Opt { alice: false },
-        Opt::from_iter(&[""]).unwrap());
+    assert_eq!(Opt { alice: false }, Opt::from_iter(&[""]).unwrap());
 
     assert!(Opt::from_iter(&["", "--bob"]).is_err());
 }
@@ -43,20 +38,22 @@ fn flag_with_underscores() {
     }
 
     println!("{}", Opt::help());
-    assert!(
-        Opt::help().contains("--this-is-awesome")
-    );
-    assert!(
-        Opt::help().contains("Documentation for awesomeness")
+    assert!(Opt::help().contains("--this-is-awesome"));
+    assert!(Opt::help().contains("Documentation for awesomeness"));
+
+    assert_eq!(
+        Opt {
+            this_is_awesome: true
+        },
+        Opt::from_iter(&["", "--this-is-awesome"]).unwrap()
     );
 
     assert_eq!(
-        Opt { this_is_awesome: true },
-        Opt::from_iter(&["", "--this-is-awesome"]).unwrap());
-
-    assert_eq!(
-        Opt { this_is_awesome: false },
-        Opt::from_iter(&[""]).unwrap());
+        Opt {
+            this_is_awesome: false
+        },
+        Opt::from_iter(&[""]).unwrap()
+    );
 
     assert!(Opt::from_iter(&["", "--bob"]).is_err());
 }

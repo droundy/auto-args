@@ -20,8 +20,12 @@ fn simple_phantom() {
     assert!(<PhantomOpt<i32>>::help().contains("--second"));
 
     assert_eq!(
-        PhantomOpt::<i32> { first: std::marker::PhantomData, second: "hello".to_string() },
-        <PhantomOpt<i32>>::from_iter(&["","--second=hello"]).unwrap());
+        PhantomOpt::<i32> {
+            first: std::marker::PhantomData,
+            second: "hello".to_string()
+        },
+        <PhantomOpt<i32>>::from_iter(&["", "--second=hello"]).unwrap()
+    );
 
     assert!(<PhantomOpt<i32>>::from_iter(&[""]).is_err());
 }

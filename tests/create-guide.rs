@@ -2,7 +2,7 @@
 extern crate auto_args;
 
 use auto_args::AutoArgs;
-use std::io::{Write,BufRead};
+use std::io::{BufRead, Write};
 
 /// # A user's guide for auto_args.
 ///
@@ -230,7 +230,8 @@ fn guide() {
     /// would give the same help message for `--position-x` as for
     /// `--velocity-x`, which would be pretty useless.
     struct Vec2d {
-        x: f64, y: f64,
+        x: f64,
+        y: f64,
     }
     #[derive(AutoArgs)]
     struct Nested {
@@ -246,7 +247,6 @@ fn guide() {
     /// This gives the following usage.
     strings.push(Nested::help());
     // INSERT STRING
-
 
     /// ## Flattened nesting types
 
@@ -301,7 +301,6 @@ fn guide() {
     /// from one or more strings should work with auto_args.  Please fill
     /// an issue on github if there is a type that you would like to
     /// have supported by auto_args.  Pull requests are most welcome.
-
     strings.reverse();
 
     let src = std::path::Path::new("tests/create-guide.rs");
@@ -313,8 +312,8 @@ fn guide() {
     let mut chars_to_trim = 0;
     for line in lines.lines() {
         let l: String = line.unwrap();
-        if l.contains(&format!("{}{}", "//","/")) && !am_writing {
-            let l = l.replacen(&format!("{}{}", "//","/"), "", 1);
+        if l.contains(&format!("{}{}", "//", "/")) && !am_writing {
+            let l = l.replacen(&format!("{}{}", "//", "/"), "", 1);
             writeln!(f, "//! {}", &l.trim()).unwrap();
         } else if l.contains(&format!("{} {}", "START", "CODE")) {
             am_writing = true;
@@ -339,4 +338,3 @@ fn guide() {
         }
     }
 }
-

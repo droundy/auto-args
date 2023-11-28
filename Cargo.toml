@@ -1,6 +1,6 @@
 [package]
 name = "auto-args"
-version = "0.2.9"
+version = "0.3.0"
 authors = ["David Roundy <daveroundy@gmail.com>"]
 edition = "2018"
 
@@ -13,6 +13,6 @@ readme = "README.md"
 
 [dependencies]
 auto-args-derive =  { path = "auto-args-derive", version = "0.1.5" }
-meval = "0.2.0"
+meval = { version = "0.2.0", optional = true }
 
 [workspace]

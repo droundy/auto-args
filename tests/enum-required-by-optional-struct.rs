@@ -11,9 +11,7 @@ use auto_args::AutoArgs;
 #[derive(Debug, AutoArgs)]
 enum Params {
     ResumeFrom(String),
-    _Params {
-        sys: SquareWellParams,
-    },
+    _Params { sys: SquareWellParams },
 }
 
 #[derive(Debug, AutoArgs)]
@@ -29,7 +27,6 @@ struct SquareWellParams {
     well_width: String,
     cell: Dimensions,
 }
-
 
 #[test]
 fn craziness() {

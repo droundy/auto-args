@@ -50,10 +50,7 @@ struct SadParams {
 #[derive(PartialEq, Debug, AutoArgs)]
 enum Params<MP, SP> {
     ResumeFrom(String),
-    _Params {
-        _sys: SP,
-        _mc: MP,
-    },
+    _Params { _sys: SP, _mc: MP },
 }
 
 #[derive(PartialEq, Debug, AutoArgs)]
@@ -66,11 +63,9 @@ struct Naive {
     naive: String,
 }
 
-
-
 #[test]
 fn craziness() {
-    type P = Params<SadParams,SquareWellParams>;
+    type P = Params<SadParams, SquareWellParams>;
     println!("help: {}", P::help());
     println!("\n\n\n\n");
     assert!(P::help().contains("--resume-from "));
@@ -79,60 +74,76 @@ fn craziness() {
     assert!(P::help().contains("--cell-width-x "));
     assert!(!P::help().contains("--dim- "));
 
-    assert_eq!(Params::ResumeFrom::<SadParams, SquareWellParams>("hello".to_string()),
-               P::parse_vec(vec![
-                   OsString::from("--resume-from"),
-                   OsString::from("hello")]).unwrap());
+    assert_eq!(
+        Params::ResumeFrom::<SadParams, SquareWellParams>("hello".to_string()),
+        P::parse_vec(vec![
+            OsString::from("--resume-from"),
+            OsString::from("hello")
+        ])
+        .unwrap()
+    );
 
-    assert_eq!(Params::ResumeFrom::<Naive, Simple>("hello".to_string()),
-               Params::<Naive,Simple>::parse_vec(vec![
-                   OsString::from("--resume-from"),
-                   OsString::from("hello")]).unwrap());
+    assert_eq!(
+        Params::ResumeFrom::<Naive, Simple>("hello".to_string()),
+        Params::<Naive, Simple>::parse_vec(vec![
+            OsString::from("--resume-from"),
+            OsString::from("hello")
+        ])
+        .unwrap()
+    );
 
-    assert_eq!(Params::_Params::<Naive, Simple> {
-        _sys: Simple {
-            simple: 37,
+    assert_eq!(
+        Params::_Params::<Naive, Simple> {
+            _sys: Simple { simple: 37 },
+            _mc: Naive {
+                naive: "goodbye".to_string(),
+            },
         },
-        _mc: Naive {
-            naive: "goodbye".to_string(),
-        },
-    },
-               Params::<Naive,Simple>::parse_vec(vec![
-                   OsString::from("--simple"),
-                   OsString::from("37"),
-                   OsString::from("--naive"),
-                   OsString::from("goodbye")]).unwrap());
+        Params::<Naive, Simple>::parse_vec(vec![
+            OsString::from("--simple"),
+            OsString::from("37"),
+            OsString::from("--naive"),
+            OsString::from("goodbye")
+        ])
+        .unwrap()
+    );
 
-    assert_eq!(Params::_Params::<SadParams, Simple> {
-        _sys: Simple {
-            simple: 137,
+    assert_eq!(
+        Params::_Params::<SadParams, Simple> {
+            _sys: Simple { simple: 137 },
+            _mc: SadParams {
+                min_T: 0.2,
+                seed: None,
+            },
         },
-        _mc: SadParams {
-            min_T: 0.2,
-            seed: None,
-        },
-    },
-               Params::<SadParams,Simple>::parse_vec(vec![
-                   OsString::from("--simple"),
-                   OsString::from("137"),
-                   OsString::from("--min-T"),
-                   OsString::from("0.2")]).unwrap());
+        Params::<SadParams, Simple>::parse_vec(vec![
+            OsString::from("--simple"),
+            OsString::from("137"),
+            OsString::from("--min-T"),
+            OsString::from("0.2")
+        ])
+        .unwrap()
+    );
 
-    assert_eq!(Params::_Params::<SadParams, SquareWellParams> {
-        _sys: SquareWellParams {
-            well_width: 1.3,
-            _dim: CellDimensions::CellVolume(5.0),
+    assert_eq!(
+        Params::_Params::<SadParams, SquareWellParams> {
+            _sys: SquareWellParams {
+                well_width: 1.3,
+                _dim: CellDimensions::CellVolume(5.0),
+            },
+            _mc: SadParams {
+                min_T: 0.2,
+                seed: None,
+            },
         },
-        _mc: SadParams {
-            min_T: 0.2,
-            seed: None,
-        },
-    },
-               P::parse_vec(vec![
-                   OsString::from("--well-width"),
-                   OsString::from("1.3"),
-                   OsString::from("--cell-volume"),
-                   OsString::from("5"),
-                   OsString::from("--min-T"),
-                   OsString::from("0.2")]).unwrap());
+        P::parse_vec(vec![
+            OsString::from("--well-width"),
+            OsString::from("1.3"),
+            OsString::from("--cell-volume"),
+            OsString::from("5"),
+            OsString::from("--min-T"),
+            OsString::from("0.2")
+        ])
+        .unwrap()
+    );
 }
