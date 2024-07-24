@@ -187,9 +187,9 @@ fn guide() {
         First {
             /// This is the "a" value
             a: String,
+            /// Only the first line of comment shows up in help.
             /// This is the "b" value, which you cannot specify unless
             /// you also specify the "a" value.
-            /// Only one line of comment shows up in the help.
             b: String,
         },
         /// A string that cannot be used with any other flag

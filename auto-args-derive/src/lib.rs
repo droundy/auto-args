@@ -20,7 +20,7 @@ extern crate proc_macro2;
 use syn::*;
 
 fn get_doc_comment(attrs: &[syn::Attribute]) -> String {
-    let mut doc_comments: Vec<_> = attrs
+    let mut doc_comments = attrs
         .iter()
         .filter_map(|attr| {
             let path = &attr.path;
@@ -56,13 +56,9 @@ fn get_doc_comment(attrs: &[syn::Attribute]) -> String {
             } else {
                 None
             }
-        })
-        .collect();
-    if doc_comments.len() > 0 {
-        doc_comments.pop().unwrap_or("".to_string())
-    } else {
-        "".to_string()
-    }
+        });
+
+    doc_comments.next().unwrap_or_else(String::new)
 }
 
 fn return_with_fields(
