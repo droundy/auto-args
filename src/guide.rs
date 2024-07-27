@@ -56,14 +56,14 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545  [--foo]
+//!   create_guide-5214c7bad433b4e9  [--foo]
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545  [--foo]
+//!   create_guide-5214c7bad433b4e9  [--foo]
 //! 
 //!   [--foo] 
 //! 
@@ -85,14 +85,14 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545  [--verbose] [--T]
+//!   create_guide-5214c7bad433b4e9  [--verbose] [--T]
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545  [--verbose] [--T]
+//!   create_guide-5214c7bad433b4e9  [--verbose] [--T]
 //! 
 //!   [--verbose] Print excess messages.
 //!   [--T]       The temperature.
@@ -120,7 +120,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545  [--verbose] [--blue-is-nice-] [--min-T]
+//!   create_guide-5214c7bad433b4e9  [--verbose] [--blue-is-nice-] [--min-T]
 //! 
 //!   [--verbose]       a simple word has "--" prepended to it.
 //!   [--blue-is-nice-] Underscores are replaced with "-" ...
@@ -149,7 +149,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545  --name STRING --T FLOAT --directory STRING
+//!   create_guide-5214c7bad433b4e9  --name STRING --T FLOAT --directory STRING
 //! 
 //!   --name STRING      The name of the type
 //!   --T FLOAT          The temperature of the type
@@ -183,7 +183,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545  [--name STRING]
+//!   create_guide-5214c7bad433b4e9  [--name STRING]
 //! 
 //!   [--name STRING] The name is an optional argument.
 //! 
@@ -201,9 +201,9 @@
 //!     First {
 //!         /// This is the "a" value
 //!         a: String,
+//!         /// Only the first line of comment shows up in help.
 //!         /// This is the "b" value, which you cannot specify unless
 //!         /// you also specify the "a" value.
-//!         /// Only one line of comment shows up in the help.
 //!         b: String,
 //!     },
 //!     /// A string that cannot be used with any other flag
@@ -215,18 +215,18 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545 (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
+//!   create_guide-5214c7bad433b4e9 (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545 (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
+//!   create_guide-5214c7bad433b4e9 (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
 //! 
 //!   EITHER               
 //!   --first-a STRING     This is the "a" value
-//!   --first-b STRING     Only one line of comment shows up in the help.
+//!   --first-b STRING     Only the first line of comment shows up in help.
 //!   OR                   
 //!   --second-flag STRING A string that cannot be used with any other flag
 //!   OR                   
@@ -276,7 +276,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545   --position-x FLOAT --position-y FLOAT  --velocity-x FLOAT --velocity-y FLOAT
+//!   create_guide-5214c7bad433b4e9   --position-x FLOAT --position-y FLOAT  --velocity-x FLOAT --velocity-y FLOAT
 //! 
 //!   --position-x FLOAT 
 //!   --position-y FLOAT 
@@ -315,14 +315,14 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545   --name STRING  --address STRING
+//!   create_guide-5214c7bad433b4e9   --name STRING  --address STRING
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-fb95975d41f6d545   --name STRING  --address STRING
+//!   create_guide-5214c7bad433b4e9   --name STRING  --address STRING
 //! 
 //!   --name STRING    The user's name
 //!   --address STRING The user's address
