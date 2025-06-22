@@ -23,9 +23,9 @@ fn get_doc_comment(attrs: &[syn::Attribute]) -> String {
     let mut doc_comments = attrs
         .iter()
         .filter_map(|attr| {
-            let path = &attr.path;
+            let path = &attr.path();
             if quote!(#path).to_string() == "doc" {
-                attr.parse_meta().ok()
+                Some(attr.meta.clone())
             } else {
                 None
             }
@@ -34,7 +34,7 @@ fn get_doc_comment(attrs: &[syn::Attribute]) -> String {
             use Lit::*;
             use Meta::*;
             if let NameValue(MetaNameValue {
-                path, lit: Str(s), ..
+                path, value: Expr::Lit(ExprLit { lit: Str(s), .. }), ..
             }) = attr
             {
                 if !path.is_ident("doc") {
