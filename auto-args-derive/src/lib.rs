@@ -23,7 +23,7 @@ fn get_doc_comment(attrs: &[syn::Attribute]) -> String {
     let mut doc_comments = attrs
         .iter()
         .filter_map(|attr| {
-            let path = &attr.path();
+            let path = attr.path();
             if quote!(#path).to_string() == "doc" {
                 Some(attr.meta.clone())
             } else {
