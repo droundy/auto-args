@@ -10,7 +10,7 @@ categories = ["command-line-interface"]
 license = "Apache-2.0/MIT"
 
 [dependencies]
-syn = "1.0.31"
+syn = "2.0.104"
 quote = "1.0.7"
 proc-macro2 = "1.0.18"
 
