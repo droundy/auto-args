@@ -222,11 +222,12 @@ fn guide() {
     /// keywords. If a variant name contains an underscore, then it is
     /// treated like a field name (as described above), with any trailing
     /// underscores removed. Otherwise the name is converted from
-    /// `CamelCase` to `kebab-case`. A variant whose name is *entirely*
-    /// underscores (so its keyword would be empty) is instead treated as
+    /// `CamelCase` to `kebab-case`. A variant whose name *starts* with an
+    /// underscore (so its keyword would be empty) is instead treated as
     /// a keyword-less default: it is tried when no other variant's
     /// keyword is present, so at most one variant of an enum may be
-    /// named this way.
+    /// named this way, and giving two variants leading-underscore names
+    /// is a compile-time error.
 
     /// If a struct has more than one field whose type is itself an
     /// `enum` derived this way, there is no single sensible position for

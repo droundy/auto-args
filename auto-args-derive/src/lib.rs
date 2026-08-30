@@ -61,6 +61,19 @@ fn get_doc_comment(attrs: &[syn::Attribute]) -> String {
     doc_comments.next().unwrap_or_else(String::new)
 }
 
+/// A `usize`-valued expression counting how many of `types` are
+/// subcommand-shaped (`IS_SUBCOMMAND == true`). Used identically by
+/// `return_with_fields`, `usage_with_fields`, and `help_with_fields` to
+/// decide whether a field list has exactly one deferred/subcommand field
+/// -- factored out so the three copies can't drift out of sync with each
+/// other (they must always agree on which field, if any, is treated as
+/// the subcommand, or parsing and `--help` output would disagree).
+fn subcommand_count_expr(types: &[syn::Type]) -> proc_macro2::TokenStream {
+    quote! {
+        (0usize #( + if <#types as auto_args::AutoArgs>::IS_SUBCOMMAND { 1 } else { 0 })*)
+    }
+}
+
 /// Generates the body of `parse_internal` for a struct's named fields (or
 /// an enum variant's named fields when used in "new style" subcommand
 /// mode). `am_enum_variant` selects between two genuinely different
@@ -118,7 +131,6 @@ fn return_with_fields(
                 let names_phase2 = f
                     .iter()
                     .map(|x| snake_case_to_kebab(&x.ident.clone().unwrap().to_string()));
-                let types_count = f.iter().map(|x| x.ty.clone());
                 let types_phase1 = f.iter().map(|x| x.ty.clone());
                 let types_phase2 = f.iter().map(|x| x.ty.clone());
                 let idents_final = f.iter().map(|x| x.ident.clone().unwrap());
@@ -126,10 +138,11 @@ fn return_with_fields(
                     .map(|i| quote::format_ident!("__auto_args_tmp_{}", i));
                 let tmp_use1 = (0..f.len())
                     .map(|i| quote::format_ident!("__auto_args_tmp_{}", i));
+                let all_types: Vec<syn::Type> = f.iter().map(|x| x.ty.clone()).collect();
+                let subcommand_count = subcommand_count_expr(&all_types);
                 quote! {
                     let join_prefix = #join_prefix;
-                    let __auto_args_subcommand_count: usize =
-                        0usize #( + if <#types_count as auto_args::AutoArgs>::IS_SUBCOMMAND { 1 } else { 0 })*;
+                    let __auto_args_subcommand_count: usize = #subcommand_count;
                     #(
                         let #tmp_decl: Option<#types_phase1> =
                             if __auto_args_subcommand_count == 1
@@ -211,10 +224,10 @@ fn usage_with_fields(
                     )*
                 }
             } else {
-                let types_count = f.iter().map(|x| x.ty.clone());
+                let all_types: Vec<syn::Type> = f.iter().map(|x| x.ty.clone()).collect();
+                let subcommand_count = subcommand_count_expr(&all_types);
                 quote! {
-                    let __auto_args_subcommand_count: usize =
-                        0usize #( + if <#types_count as auto_args::AutoArgs>::IS_SUBCOMMAND { 1 } else { 0 })*;
+                    let __auto_args_subcommand_count: usize = #subcommand_count;
                     #( doc.push_str(
                         &format!(" {}",
                                  <#types3 as auto_args::AutoArgs>::tiny_help_message(
@@ -293,10 +306,10 @@ fn help_with_fields(
                     )*
                 }
             } else {
-                let types_count = f.iter().map(|x| x.ty.clone());
+                let all_types: Vec<syn::Type> = f.iter().map(|x| x.ty.clone()).collect();
+                let subcommand_count = subcommand_count_expr(&all_types);
                 quote! {
-                    let __auto_args_subcommand_count: usize =
-                        0usize #( + if <#types_count as auto_args::AutoArgs>::IS_SUBCOMMAND { 1 } else { 0 })*;
+                    let __auto_args_subcommand_count: usize = #subcommand_count;
                     #( doc.push_str(
                         &<#types3 as auto_args::AutoArgs>::help_message(
                             &(if __auto_args_subcommand_count == 1
@@ -358,7 +371,7 @@ fn create_join_prefix() -> proc_macro2::TokenStream {
 fn create_find_prefix() -> proc_macro2::TokenStream {
     quote! {
         match key.chars().next() {
-            None | Some('_') => "--".to_string(),
+            None => "--".to_string(),
             _ => match key.chars().last() {
                 Some('-') => key.to_string(),
                 _ => format!("{}-", key),
@@ -397,6 +410,38 @@ fn new_style_variant_body(f: &syn::Fields, name: proc_macro2::TokenStream) -> pr
             }
         }
         _ => panic!("AutoArgs only supports named fields so far!"),
+    }
+}
+
+/// Wraps a subcommand variant's body so that it runs against a *clone* of
+/// `args`, committing the clone back to the real `args` only if the body
+/// succeeds. On failure, `args` is left completely untouched (including
+/// the keyword itself, if `consume_keyword` requested removing one) —
+/// mirroring the transactional guarantee the legacy flag-style dispatch
+/// already provides via its own clone-per-variant loop. Without this, a
+/// caller that wraps a subcommand-style enum in `Option<T>` (whose
+/// `parse_internal` swallows any error via `.ok()`) would see `args`
+/// mutated (the keyword silently consumed) even though the overall
+/// attempt failed, discarding useful information.
+fn transactional_body(consume_keyword: bool, body: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+    let remove_keyword = if consume_keyword {
+        quote! { args.remove(0); }
+    } else {
+        quote! {}
+    };
+    quote! {
+        {
+            let mut __auto_args_trial = args.clone();
+            let __auto_args_result = (|| -> Result<_, auto_args::Error> {
+                let args = &mut __auto_args_trial;
+                #remove_keyword
+                #body
+            })();
+            if __auto_args_result.is_ok() {
+                *args = __auto_args_trial;
+            }
+            __auto_args_result
+        }
     }
 }
 
@@ -456,29 +501,6 @@ fn new_style_variant_help(f: &syn::Fields, name: proc_macro2::TokenStream) -> pr
     }
 }
 
-/// A `bool`-valued expression: does this variant's own fields require any
-/// input, i.e. can it match with zero further tokens?
-fn requires_input_for_fields(f: &syn::Fields) -> proc_macro2::TokenStream {
-    match f {
-        syn::Fields::Named(fields) => {
-            let types: Vec<_> = fields.named.iter().map(|x| x.ty.clone()).collect();
-            quote! { ( #( <#types as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false ) }
-        }
-        syn::Fields::Unit => quote! { false },
-        syn::Fields::Unnamed(unnamed) if unnamed.unnamed.len() == 1 => {
-            let ty = unnamed
-                .unnamed
-                .iter()
-                .next()
-                .expect("we should have one field")
-                .ty
-                .clone();
-            quote! { <#ty as auto_args::AutoArgs>::REQUIRES_INPUT }
-        }
-        _ => panic!("AutoArgs only supports named fields so far!"),
-    }
-}
-
 /// Generates the `AutoArgs` impl.
 #[proc_macro_derive(AutoArgs)]
 pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -495,7 +517,8 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         }) => {
             let f: Vec<_> = fields.named.clone().into_iter().collect();
             let types3 = f.iter().rev().map(|x| x.ty.clone());
-            let types4 = f.iter().map(|x| x.ty.clone());
+            let all_types: Vec<syn::Type> = f.iter().map(|x| x.ty.clone()).collect();
+            let subcommand_count = subcommand_count_expr(&all_types);
             let return_struct =
                 return_with_fields(syn::Fields::Named(fields.clone()), quote!(#name), false);
             let usage_struct =
@@ -505,8 +528,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             quote! {
                 const REQUIRES_INPUT: bool = #(
                     <#types3 as auto_args::AutoArgs>::REQUIRES_INPUT ||)* false;
-                const IS_SUBCOMMAND: bool =
-                    (0usize #( + if <#types4 as auto_args::AutoArgs>::IS_SUBCOMMAND { 1 } else { 0 })*) == 1;
+                const IS_SUBCOMMAND: bool = #subcommand_count == 1;
                 fn parse_internal(key: &str, args: &mut Vec<std::ffi::OsString>)
                                   -> Result<Self, auto_args::Error> {
                     let _prefix = #find_prefix;
@@ -584,6 +606,22 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                      name (used as a keyword-less default/subcommand variant)"
                 );
             }
+            for i in 0..vnames.len() {
+                if vnames[i].is_empty() {
+                    continue;
+                }
+                for j in (i + 1)..vnames.len() {
+                    if vnames[i] == vnames[j] {
+                        panic!(
+                            "AutoArgs: variants {} and {} both produce the keyword \"{}\"; \
+                             give one of them a distinct name",
+                            e.variants[i].ident,
+                            e.variants[j].ident,
+                            vnames[i],
+                        );
+                    }
+                }
+            }
 
             let vnames_for_old = &vnames;
             // println!("variant names are {:?}", names);
@@ -612,18 +650,16 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 let variant_name = v[i].ident.clone();
                 let vname = &vnames[i];
                 let body = new_style_variant_body(&v[i].fields, quote!(#name::#variant_name));
+                let body = transactional_body(true, body);
                 quote! {
-                    Some(#vname) => {
-                        args.remove(0);
-                        #body
-                    }
+                    Some(#vname) => #body,
                 }
             });
 
             let default_arm = if let Some(i) = default_idx {
                 let variant_name = v[i].ident.clone();
                 let body = new_style_variant_body(&v[i].fields, quote!(#name::#variant_name));
-                quote! { #body }
+                transactional_body(false, body)
             } else {
                 quote! {
                     if let Some(w) = word {
@@ -631,6 +667,13 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             w,
                             vec![ #(#keyworded_names_for_err.to_string()),* ],
                         ))
+                    } else if let Some(bad) = args.get(0) {
+                        // `word` is `None` here either because there's no
+                        // first argument at all, or because it isn't valid
+                        // UTF-8 (so it couldn't be matched against any
+                        // keyword) -- re-check `args.get(0)` (still
+                        // untouched at this point) to tell those apart.
+                        Err(auto_args::Error::InvalidUTF8(format!("{:?}", bad)))
                     } else {
                         Err(auto_args::Error::MissingSubcommand(
                             vec![ #(#keyworded_names_for_err.to_string()),* ],
@@ -673,10 +716,16 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
             let tiny_names = keyworded_names.clone();
 
-            let requires_input_expr = match default_idx {
-                None => quote! { true },
-                Some(i) => requires_input_for_fields(&v[i].fields),
-            };
+            // REQUIRES_INPUT is unconditionally `true` for every enum,
+            // even one with a keyword-less default variant whose own
+            // fields are all optional. This mirrors the pre-subcommand
+            // behavior deliberately: the legacy flag-style fallback path
+            // (`check_main_flag`, still used whenever a struct has 2+
+            // enum-typed fields) treats `REQUIRES_INPUT == false` as "this
+            // field can match with literally nothing supplied," and relies
+            // on every enum-typed field satisfying `REQUIRES_INPUT == true`
+            // to avoid demanding a spurious extra disambiguator flag.
+            let requires_input_expr = quote! { true };
 
             let s = quote! {
                 const REQUIRES_INPUT: bool = #requires_input_expr;
@@ -692,13 +741,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             _ => { #default_arm }
                         }
                     } else {
-                        let _prefix = match key.chars().next() {
-                            None | Some('_') => "--".to_string(),
-                            _ => match key.chars().last() {
-                                Some('-') => key.to_string(),
-                                _ => format!("{}-", key),
-                            }
-                        };
+                        let _prefix = #find_prefix;
                         let orig_args = args;
                         let mut error_args = orig_args.clone();
                         let mut most_used = 0;
@@ -741,13 +784,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #default_help_line
                         doc
                     } else {
-                        let _prefix = match key.chars().next() {
-                            None | Some('_') => "--".to_string(),
-                            _ => match key.chars().last() {
-                                Some('-') => key.to_string(),
-                                _ => format!("{}-", key),
-                            }
-                        };
+                        let _prefix = #find_prefix;
                         let mut doc = String::new();
                         doc.push_str("\tEITHER\t\n");
                         #(
@@ -781,13 +818,7 @@ pub fn auto_args(raw_input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         doc.push_str(">");
                         doc
                     } else {
-                        let _prefix = match key.chars().next() {
-                            None | Some('_') => "--".to_string(),
-                            _ => match key.chars().last() {
-                                Some('-') => key.to_string(),
-                                _ => format!("{}-", key),
-                            }
-                        };
+                        let _prefix = #find_prefix;
                         let mut doc = String::new();
                         doc.push_str("( ");
                         #(
