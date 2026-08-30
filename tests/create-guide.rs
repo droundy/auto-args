@@ -175,10 +175,14 @@ fn guide() {
     // INSERT STRING
     /// The value is then `None` if the user did not specify that flag.
 
-    /// ## Exclusive flags
+    /// ## Subcommands
 
-    /// If you want to make certain flags/values mutually exclusive,
-    /// you use an `enum` (just as always, in rust).
+    /// If you want to offer several mutually exclusive ways of running
+    /// your program -- the way `git` or `gh` offer subcommands like
+    /// `git remote add` or `gh pr create` -- you use an `enum` (just as
+    /// always, in rust). A bare keyword, derived from the variant's
+    /// name, selects the variant; that variant's own fields then become
+    /// ordinary (unprefixed) flags of their own.
     #[derive(AutoArgs)]
     // START CODE
     enum Exclusive {
@@ -189,10 +193,10 @@ fn guide() {
             a: String,
             /// Only the first line of comment shows up in help.
             /// This is the "b" value, which you cannot specify unless
-            /// you also specify the "a" value.
+            /// you also select the `first` subcommand.
             b: String,
         },
-        /// A string that cannot be used with any other flag
+        /// A string that must be given right after its own keyword
         SecondFlag(String),
         /// A flag with no value, and with a capital letter.
         Third_,
@@ -204,20 +208,32 @@ fn guide() {
     /// and the following help message.
     strings.push(Exclusive::help());
     // INSERT STRING
-    /// This example illustrates the three kinds of `enum` variants.
-    /// Sadly, the help message does not indicate that these flags are
-    /// exlusive.  However, if a user tries to specify both `--third`
-    /// and `--second FOO`, however, they will get a nice error
-    /// message.  Note that you cannot use a tuple variant with more
-    /// than one field.
+    /// This example illustrates the three kinds of `enum` variants: a
+    /// `first --a STRING --b STRING` subcommand with its own flags, a
+    /// `second-flag STRING` subcommand taking a single positional value,
+    /// and a bare `Third` subcommand (capitalized, since its name has no
+    /// non-underscore lowercase letters to convert) with no value at
+    /// all. Note that you cannot use a tuple variant with more than one
+    /// field.
 
-    /// Note that the rules for constructing flags from enum variants
-    /// are more complicated than for struct fields.  This is because
-    /// by convention variants are given `CamelCase` names, which
-    /// aren't suitable as flags.  If a variant name contains an
-    /// underscore, then it is treated like a field name (as described
-    /// above), with any trailing underscores removed.  Otherwise the
-    /// name is converted from `CamelCase` to `kebab-case`.
+    /// Note that the rules for constructing a variant's keyword are more
+    /// complicated than for struct fields. This is because by convention
+    /// variants are given `CamelCase` names, which aren't suitable as
+    /// keywords. If a variant name contains an underscore, then it is
+    /// treated like a field name (as described above), with any trailing
+    /// underscores removed. Otherwise the name is converted from
+    /// `CamelCase` to `kebab-case`. A variant whose name *starts* with an
+    /// underscore (so its keyword would be empty) is instead treated as
+    /// a keyword-less default: it is tried when no other variant's
+    /// keyword is present, so at most one variant of an enum may be
+    /// named this way, and giving two variants leading-underscore names
+    /// is a compile-time error.
+
+    /// If a struct has more than one field whose type is itself an
+    /// `enum` derived this way, there is no single sensible position for
+    /// two subcommand keywords, so all of that struct's enum-typed
+    /// fields fall back to ordinary prefixed flags instead, exactly as
+    /// enums used to work throughout this crate.
 
     /// ## Nesting types
 

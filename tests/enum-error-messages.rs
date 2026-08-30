@@ -6,9 +6,6 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#[macro_use]
-extern crate auto_args;
-
 use auto_args::AutoArgs;
 
 #[test]
@@ -20,37 +17,38 @@ fn enum_error_message() {
         Third { third: u16 },
     }
     println!("help: {}", EnumOpt::help());
-    assert!(EnumOpt::help().contains("--first-first "));
-    assert!(EnumOpt::help().contains("--first-second "));
-    assert!(EnumOpt::help().contains("--second-second "));
-    assert!(EnumOpt::help().contains("--third-third "));
+    assert!(EnumOpt::help().contains("--first "));
+    assert!(EnumOpt::help().contains("--second "));
+    assert!(EnumOpt::help().contains("--third "));
 
     assert_eq!(
         EnumOpt::First {
             first: "hello".to_string(),
             second: "world".to_string()
         },
-        EnumOpt::from_iter(&["", "--first-first", "hello", "--first-second", "world"]).unwrap()
+        EnumOpt::from_iter(&["", "first", "--first", "hello", "--second", "world"]).unwrap()
     );
 
     assert_eq!(
         EnumOpt::Second { second: 5 },
-        EnumOpt::from_iter(&["", "--second-second", "5"]).unwrap()
+        EnumOpt::from_iter(&["", "second", "--second", "5"]).unwrap()
     );
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
 
-    assert!(EnumOpt::from_iter(&["", "--first-first", "hello", "--second-second", "5"]).is_err());
     assert_eq!(
-        EnumOpt::from_iter(&["", "--first-first", "hello"]),
-        Err(auto_args::Error::MissingOption(
-            "--first-second".to_string()
-        ))
+        EnumOpt::from_iter(&["", "first", "--first", "hello"]),
+        Err(auto_args::Error::MissingOption("--second".to_string()))
     );
-    // FIXME the error message depends on the order of arguments in the types in an annoying way.
-    // It would be better to check how many flags *could* be found in each variant, rather than
-    // quitting after the first failure.
 
-    // assert_eq!(EnumOpt::from_iter(&["", "--first-second", "hello"]),
-    //      Err(auto_args::Error::MissingOption("--first-first".to_string())));
+    // Because keyword dispatch is now deterministic (the "first" keyword
+    // unambiguously selects the `First` variant before any of its own
+    // fields are parsed), the error precisely reflects which field of
+    // *that* variant is missing, regardless of field order. This used to
+    // be unreliable (see the old FIXME here) when every variant was
+    // tried in turn against the same argument pool.
+    assert_eq!(
+        EnumOpt::from_iter(&["", "first", "--second", "hello"]),
+        Err(auto_args::Error::MissingOption("--first".to_string()))
+    );
 }

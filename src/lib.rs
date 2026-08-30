@@ -106,6 +106,15 @@ pub trait AutoArgs: Sized {
     /// This is false if the data may be processed with no input, true
     /// otherwise.
     const REQUIRES_INPUT: bool;
+    /// Indicates whether this type, when parsed with an empty `key`
+    /// (i.e. in "bare" position), consumes a positional keyword to
+    /// select among several possibilities.
+    ///
+    /// This is `true` for enums derived with `AutoArgs`, and is used
+    /// by derived structs to decide whether one of their fields should
+    /// be parsed positionally (as a nested subcommand) rather than as
+    /// ordinary flags.
+    const IS_SUBCOMMAND: bool = false;
     /// Return a tiny  help message.
     fn tiny_help_message(key: &str) -> String;
     /// Return a help message.
@@ -170,6 +179,12 @@ pub enum Error {
 
     /// An unexpected option.
     UnexpectedOption(String),
+
+    /// A subcommand keyword that did not match any known subcommand.
+    UnknownSubcommand(String, Vec<String>),
+
+    /// A subcommand keyword was required but none was given.
+    MissingSubcommand(Vec<String>),
 }
 
 impl std::fmt::Display for Error {
@@ -189,6 +204,17 @@ impl std::fmt::Display for Error {
             }
             Error::UnexpectedOption(o) => {
                 write!(f, "unexpected option: {}", o)
+            }
+            Error::UnknownSubcommand(got, known) => {
+                write!(
+                    f,
+                    "unknown subcommand '{}' (expected one of: {})",
+                    got,
+                    known.join(", ")
+                )
+            }
+            Error::MissingSubcommand(known) => {
+                write!(f, "expected a subcommand (one of: {})", known.join(", "))
             }
         }
     }
@@ -336,6 +362,7 @@ impl AutoArgs for bool {
 
 impl<T: AutoArgs> AutoArgs for Option<T> {
     const REQUIRES_INPUT: bool = false;
+    const IS_SUBCOMMAND: bool = T::IS_SUBCOMMAND;
     fn parse_internal(key: &str, args: &mut Vec<OsString>) -> Result<Self, Error> {
         Ok(T::parse_internal(key, args).ok())
     }
@@ -693,7 +720,7 @@ mod tests {
     }
     #[test]
     fn derive_either() {
-        let flags = &["--left", "37"];
+        let flags = &["left", "37"];
         should_parse_completely(flags, "", Either::<u8, u16>::Left(37u8));
     }
     #[test]
@@ -710,7 +737,7 @@ mod tests {
     }
     #[test]
     fn derive_either_either() {
-        let flags = &["--right-left", "37"];
+        let flags = &["right", "left", "37"];
         should_parse_completely(
             flags,
             "",
@@ -719,21 +746,21 @@ mod tests {
     }
     #[test]
     fn derive_either_option() {
-        let flags = &["--right-left", "7"];
+        let flags = &["right", "left", "7"];
         should_parse_completely(
             flags,
             "",
             Either::<u32, Either<u8, Option<u32>>>::Right(Either::Left(7)),
         );
 
-        let flags = &["--right-right"];
+        let flags = &["right", "right"];
         should_parse_completely(
             flags,
             "",
             Either::<u32, Either<u8, Option<u32>>>::Right(Either::Right(None)),
         );
 
-        let flags = &["--right-right", "5"];
+        let flags = &["right", "right", "5"];
         should_parse_completely(
             flags,
             "",
@@ -747,7 +774,7 @@ mod tests {
     }
     #[test]
     fn derive_myenum() {
-        let flags = &["--hello-foo", "good", "--hello-bar", "7"];
+        let flags = &["hello", "--foo", "good", "--bar", "7"];
         should_parse(
             flags,
             "",

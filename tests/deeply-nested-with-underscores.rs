@@ -6,9 +6,6 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#[macro_use]
-extern crate auto_args;
-
 use auto_args::AutoArgs;
 
 use std::ffi::OsString;
@@ -68,16 +65,23 @@ fn craziness() {
     type P = Params<SadParams, SquareWellParams>;
     println!("help: {}", P::help());
     println!("\n\n\n\n");
-    assert!(P::help().contains("--resume-from "));
+    assert!(P::help().contains("resume-from"));
     assert!(P::help().contains("--well-width "));
-    assert!(P::help().contains("--cell-volume "));
-    assert!(P::help().contains("--cell-width-x "));
+    // `_dim`'s type, `CellDimensions`, is `SquareWellParams`'s sole
+    // enum-typed field, so it is a nested subcommand (its own keywords
+    // `cell-width`/`cell-volume`) rather than a `--cell-...`-prefixed
+    // flag, and its own fields are in turn unprefixed.
+    assert!(P::help().contains("cell-width"));
+    assert!(P::help().contains("cell-volume"));
+    assert!(P::help().contains("--x "));
+    assert!(P::help().contains("--y "));
+    assert!(P::help().contains("--z "));
     assert!(!P::help().contains("--dim- "));
 
     assert_eq!(
         Params::ResumeFrom::<SadParams, SquareWellParams>("hello".to_string()),
         P::parse_vec(vec![
-            OsString::from("--resume-from"),
+            OsString::from("resume-from"),
             OsString::from("hello")
         ])
         .unwrap()
@@ -86,12 +90,15 @@ fn craziness() {
     assert_eq!(
         Params::ResumeFrom::<Naive, Simple>("hello".to_string()),
         Params::<Naive, Simple>::parse_vec(vec![
-            OsString::from("--resume-from"),
+            OsString::from("resume-from"),
             OsString::from("hello")
         ])
         .unwrap()
     );
 
+    // Neither `Naive` nor `Simple` has any enum-typed field, so
+    // `_Params<Naive, Simple>` has zero subcommand-shaped fields and
+    // stays pure flags -- unchanged from before this redesign.
     assert_eq!(
         Params::_Params::<Naive, Simple> {
             _sys: Simple { simple: 37 },
@@ -125,6 +132,10 @@ fn craziness() {
         .unwrap()
     );
 
+    // `SquareWellParams` (the `SP` here) *does* have a sole enum-typed
+    // field, so `_sys` becomes a nested subcommand: the keyword
+    // `cell-volume` plus its positional value must appear (after all
+    // ordinary flags, in any order relative to them).
     assert_eq!(
         Params::_Params::<SadParams, SquareWellParams> {
             _sys: SquareWellParams {
@@ -139,10 +150,10 @@ fn craziness() {
         P::parse_vec(vec![
             OsString::from("--well-width"),
             OsString::from("1.3"),
-            OsString::from("--cell-volume"),
-            OsString::from("5"),
             OsString::from("--min-T"),
-            OsString::from("0.2")
+            OsString::from("0.2"),
+            OsString::from("cell-volume"),
+            OsString::from("5")
         ])
         .unwrap()
     );

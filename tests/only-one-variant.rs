@@ -9,9 +9,15 @@ enum Exclusive {
 fn craziness() {
     println!("help: {}", Exclusive::help());
     println!("\n\n\n\n");
-    assert!(Exclusive::help().contains("--first-a "));
-
-    assert!(Exclusive::help().contains("--first-a "));
+    assert!(Exclusive::help().contains("--a "));
+    assert!(Exclusive::help().contains("first"));
 
     assert!(Exclusive::from_iter(&[""]).is_err());
+
+    assert_eq!(
+        Exclusive::First {
+            a: "hi".to_string()
+        },
+        Exclusive::from_iter(&["", "first", "--a", "hi"]).unwrap()
+    );
 }
