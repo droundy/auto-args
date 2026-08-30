@@ -56,14 +56,14 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9  [--foo]
+//!   create_guide-9bb8923c28882ab7  [--foo]
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9  [--foo]
+//!   create_guide-9bb8923c28882ab7  [--foo]
 //! 
 //!   [--foo] 
 //! 
@@ -85,14 +85,14 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9  [--verbose] [--T]
+//!   create_guide-9bb8923c28882ab7  [--verbose] [--T]
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9  [--verbose] [--T]
+//!   create_guide-9bb8923c28882ab7  [--verbose] [--T]
 //! 
 //!   [--verbose] Print excess messages.
 //!   [--T]       The temperature.
@@ -120,7 +120,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9  [--verbose] [--blue-is-nice-] [--min-T]
+//!   create_guide-9bb8923c28882ab7  [--verbose] [--blue-is-nice-] [--min-T]
 //! 
 //!   [--verbose]       a simple word has "--" prepended to it.
 //!   [--blue-is-nice-] Underscores are replaced with "-" ...
@@ -149,7 +149,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9  --name STRING --T FLOAT --directory STRING
+//!   create_guide-9bb8923c28882ab7  --name STRING --T FLOAT --directory STRING
 //! 
 //!   --name STRING      The name of the type
 //!   --T FLOAT          The temperature of the type
@@ -183,7 +183,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9  [--name STRING]
+//!   create_guide-9bb8923c28882ab7  [--name STRING]
 //! 
 //!   [--name STRING] The name is an optional argument.
 //! 
@@ -191,9 +191,13 @@
 //! For more information try --help
 //! ```
 //! The value is then `None` if the user did not specify that flag.
-//! ## Exclusive flags
-//! If you want to make certain flags/values mutually exclusive,
-//! you use an `enum` (just as always, in rust).
+//! ## Subcommands
+//! If you want to offer several mutually exclusive ways of running
+//! your program -- the way `git` or `gh` offer subcommands like
+//! `git remote add` or `gh pr create` -- you use an `enum` (just as
+//! always, in rust). A bare keyword, derived from the variant's
+//! name, selects the variant; that variant's own fields then become
+//! ordinary (unprefixed) flags of their own.
 //! ```
 //! enum Exclusive {
 //!     /// In this context, the doc comment for the variant is not
@@ -203,10 +207,10 @@
 //!         a: String,
 //!         /// Only the first line of comment shows up in help.
 //!         /// This is the "b" value, which you cannot specify unless
-//!         /// you also specify the "a" value.
+//!         /// you also select the `first` subcommand.
 //!         b: String,
 //!     },
-//!     /// A string that cannot be used with any other flag
+//!     /// A string that must be given right after its own keyword
 //!     SecondFlag(String),
 //!     /// A flag with no value, and with a capital letter.
 //!     Third_,
@@ -215,40 +219,48 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9 (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
+//!   create_guide-9bb8923c28882ab7 <first|second-flag|Third>
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9 (  --first-a STRING --first-b STRING | --second-flag STRING | --Third )
+//!   create_guide-9bb8923c28882ab7 <first|second-flag|Third>
 //! 
-//!   EITHER               
-//!   --first-a STRING     This is the "a" value
-//!   --first-b STRING     Only the first line of comment shows up in help.
-//!   OR                   
-//!   --second-flag STRING A string that cannot be used with any other flag
-//!   OR                   
-//!   --Third              A flag with no value, and with a capital letter.
-//!                        
+//!   SUBCOMMANDS 	
+//!   first        --a STRING --b STRING	In this context, the doc comment for the variant is not
+//!   --a STRING  This is the "a" value
+//!   --b STRING  Only the first line of comment shows up in help.
+//!   second-flag STRING	A string that must be given right after its own keyword
+//!   STRING      	Third		A flag with no value, and with a capital letter.
 //! 
 //! 
 //! For more information try --help
 //! ```
-//! This example illustrates the three kinds of `enum` variants.
-//! Sadly, the help message does not indicate that these flags are
-//! exlusive.  However, if a user tries to specify both `--third`
-//! and `--second FOO`, however, they will get a nice error
-//! message.  Note that you cannot use a tuple variant with more
-//! than one field.
-//! Note that the rules for constructing flags from enum variants
-//! are more complicated than for struct fields.  This is because
-//! by convention variants are given `CamelCase` names, which
-//! aren't suitable as flags.  If a variant name contains an
-//! underscore, then it is treated like a field name (as described
-//! above), with any trailing underscores removed.  Otherwise the
-//! name is converted from `CamelCase` to `kebab-case`.
+//! This example illustrates the three kinds of `enum` variants: a
+//! `first --a STRING --b STRING` subcommand with its own flags, a
+//! `second-flag STRING` subcommand taking a single positional value,
+//! and a bare `Third` subcommand (capitalized, since its name has no
+//! non-underscore lowercase letters to convert) with no value at
+//! all. Note that you cannot use a tuple variant with more than one
+//! field.
+//! Note that the rules for constructing a variant's keyword are more
+//! complicated than for struct fields. This is because by convention
+//! variants are given `CamelCase` names, which aren't suitable as
+//! keywords. If a variant name contains an underscore, then it is
+//! treated like a field name (as described above), with any trailing
+//! underscores removed. Otherwise the name is converted from
+//! `CamelCase` to `kebab-case`. A variant whose name is *entirely*
+//! underscores (so its keyword would be empty) is instead treated as
+//! a keyword-less default: it is tried when no other variant's
+//! keyword is present, so at most one variant of an enum may be
+//! named this way.
+//! If a struct has more than one field whose type is itself an
+//! `enum` derived this way, there is no single sensible position for
+//! two subcommand keywords, so all of that struct's enum-typed
+//! fields fall back to ordinary prefixed flags instead, exactly as
+//! enums used to work throughout this crate.
 //! ## Nesting types
 //! You can use any `AutoArgs` type as a field within a struct or
 //! enum.  Doing so will give flag names that combine the nested
@@ -276,7 +288,7 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9   --position-x FLOAT --position-y FLOAT  --velocity-x FLOAT --velocity-y FLOAT
+//!   create_guide-9bb8923c28882ab7   --position-x FLOAT --position-y FLOAT  --velocity-x FLOAT --velocity-y FLOAT
 //! 
 //!   --position-x FLOAT 
 //!   --position-y FLOAT 
@@ -315,14 +327,14 @@
 //! This gives the following usage.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9   --name STRING  --address STRING
+//!   create_guide-9bb8923c28882ab7   --name STRING  --address STRING
 //! 
 //! For more information try --help
 //! ```
 //! and the following help message.
 //! ```ignore
 //! USAGE:
-//!   create_guide-5214c7bad433b4e9   --name STRING  --address STRING
+//!   create_guide-9bb8923c28882ab7   --name STRING  --address STRING
 //! 
 //!   --name STRING    The user's name
 //!   --address STRING The user's address

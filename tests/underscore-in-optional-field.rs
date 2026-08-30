@@ -25,5 +25,6 @@ struct SquareWellParams {
 #[test]
 fn craziness() {
     println!("help: {}", Params::help());
-    assert!(Params::help().contains("--resume-from "));
+    assert!(Params::help().contains("resume-from"));
+    assert!(Params::help().contains("--sys-well-width "));
 }

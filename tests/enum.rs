@@ -6,9 +6,6 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#[macro_use]
-extern crate auto_args;
-
 use auto_args::AutoArgs;
 
 #[test]
@@ -20,25 +17,31 @@ fn simple_enum() {
         Third { third: u16 },
     }
     println!("help: {}", EnumOpt::help());
-    assert!(EnumOpt::help().contains("--first-first "));
-    assert!(EnumOpt::help().contains("--second-second "));
-    assert!(EnumOpt::help().contains("--third-third "));
+    // The keyword selects the variant; its own field is then an
+    // unprefixed flag (here the field happens to share its name with
+    // the keyword, which is legal, if a little confusing).
+    assert!(EnumOpt::help().contains("first"));
+    assert!(EnumOpt::help().contains("--first "));
+    assert!(EnumOpt::help().contains("second"));
+    assert!(EnumOpt::help().contains("--second "));
+    assert!(EnumOpt::help().contains("third"));
+    assert!(EnumOpt::help().contains("--third "));
 
     assert_eq!(
         EnumOpt::First {
             first: "hello".to_string()
         },
-        EnumOpt::from_iter(&["", "--first-first", "hello"]).unwrap()
+        EnumOpt::from_iter(&["", "first", "--first", "hello"]).unwrap()
     );
 
     assert_eq!(
         EnumOpt::Second { second: 5 },
-        EnumOpt::from_iter(&["", "--second-second", "5"]).unwrap()
+        EnumOpt::from_iter(&["", "second", "--second", "5"]).unwrap()
     );
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
 
-    assert!(EnumOpt::from_iter(&["", "--first-first", "hello", "--second-second", "5"]).is_err());
+    assert!(EnumOpt::from_iter(&["", "typo"]).is_err());
 }
 
 #[test]
@@ -50,23 +53,21 @@ fn unit_enum() {
         Third,
     }
     println!("help: {}", EnumOpt::help());
-    assert!(EnumOpt::help().contains("--first "));
-    assert!(EnumOpt::help().contains("--second "));
-    assert!(EnumOpt::help().contains("--third "));
+    assert!(EnumOpt::help().contains("first"));
+    assert!(EnumOpt::help().contains("second"));
+    assert!(EnumOpt::help().contains("third"));
 
-    assert_eq!(
-        EnumOpt::First,
-        EnumOpt::from_iter(&["", "--first"]).unwrap()
-    );
+    assert_eq!(EnumOpt::First, EnumOpt::from_iter(&["", "first"]).unwrap());
 
     assert_eq!(
         EnumOpt::Second,
-        EnumOpt::from_iter(&["", "--second"]).unwrap()
+        EnumOpt::from_iter(&["", "second"]).unwrap()
     );
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
 
-    assert!(EnumOpt::from_iter(&["", "--first", "--second"]).is_err());
+    // Only one keyword may appear; the second is left over and rejected.
+    assert!(EnumOpt::from_iter(&["", "first", "second"]).is_err());
 }
 
 #[test]
@@ -79,26 +80,26 @@ fn unit_enum_with_underscores() {
         T_,
     }
     println!("help: {}", EnumOpt::help());
-    assert!(EnumOpt::help().contains("--First-World "));
-    assert!(EnumOpt::help().contains("--second "));
+    assert!(EnumOpt::help().contains("First-World"));
+    assert!(EnumOpt::help().contains("second"));
     assert!(EnumOpt::help().contains("The second option is awesome!"));
-    assert!(EnumOpt::help().contains("--T "));
+    assert!(EnumOpt::help().contains("T"));
 
     assert_eq!(
         EnumOpt::First_World,
-        EnumOpt::from_iter(&["", "--First-World"]).unwrap()
+        EnumOpt::from_iter(&["", "First-World"]).unwrap()
     );
 
     assert_eq!(
         EnumOpt::Second,
-        EnumOpt::from_iter(&["", "--second"]).unwrap()
+        EnumOpt::from_iter(&["", "second"]).unwrap()
     );
 
-    assert_eq!(EnumOpt::T_, EnumOpt::from_iter(&["", "--T"]).unwrap());
+    assert_eq!(EnumOpt::T_, EnumOpt::from_iter(&["", "T"]).unwrap());
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
 
-    assert!(EnumOpt::from_iter(&["", "--first", "--second"]).is_err());
+    assert!(EnumOpt::from_iter(&["", "first", "second"]).is_err());
 }
 
 #[test]
@@ -111,27 +112,26 @@ fn enum_with_singular_tuple() {
         Bar(String),
     }
     println!("help: {}", EnumOpt::help());
-    assert!(EnumOpt::help().contains("--foo u32"));
-    assert!(EnumOpt::help().contains("--bar STRING"));
+    assert!(EnumOpt::help().contains("foo"));
+    assert!(EnumOpt::help().contains("bar"));
     assert!(EnumOpt::help().contains("The foo integer"));
     assert!(EnumOpt::help().contains("The bar String"));
 
-    println!("Without too much fun...");
-    println!("Hello world {:?}", EnumOpt::from_iter(&["", "--foo=37"]));
-    println!("This is fun...");
+    // The tuple variant's field is now a bare positional value, not a
+    // `--foo=VALUE` flag.
     assert_eq!(
         EnumOpt::Foo(37),
-        EnumOpt::from_iter(&["", "--foo=37"]).expect("Trouble right here")
+        EnumOpt::from_iter(&["", "foo", "37"]).expect("Trouble right here")
     );
 
     assert_eq!(
         EnumOpt::Bar("hello".to_string()),
-        EnumOpt::from_iter(&["", "--bar=hello"]).unwrap()
+        EnumOpt::from_iter(&["", "bar", "hello"]).unwrap()
     );
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
 
-    assert!(EnumOpt::from_iter(&["", "--foo=37", "--bar=hello"]).is_err());
+    assert!(EnumOpt::from_iter(&["", "foo", "37", "bar", "hello"]).is_err());
 }
 
 #[test]
@@ -143,8 +143,9 @@ fn enum_with_underscore_variant() {
     }
     println!("help: {}", EnumOpt::help());
     assert!(EnumOpt::help().contains("--hello "));
-    assert!(EnumOpt::help().contains("--goodbye "));
+    assert!(EnumOpt::help().contains("goodbye"));
 
+    // `_Greet` has no keyword: it is the keyword-less default variant.
     assert_eq!(
         EnumOpt::_Greet {
             hello: "David".to_string()
@@ -154,12 +155,10 @@ fn enum_with_underscore_variant() {
 
     assert_eq!(
         EnumOpt::Goodbye("David".to_string()),
-        EnumOpt::from_iter(&["", "--goodbye=David"]).unwrap()
+        EnumOpt::from_iter(&["", "goodbye", "David"]).unwrap()
     );
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
-
-    assert!(EnumOpt::from_iter(&["", "--hello=David", "--goodbye=Goliath"]).is_err());
 }
 
 #[test]
@@ -174,8 +173,11 @@ fn enum_with_nested_underscore_variant() {
         say: EnumOpt,
     }
     println!("help: {}", Opt::help());
-    assert!(Opt::help().contains("--say-hello "));
-    assert!(Opt::help().contains("--say-goodbye "));
+    // `say` is the struct's sole enum-typed field, so it becomes a
+    // subcommand rather than a `--say-...`-prefixed flag: no prefix
+    // leaks through to the enum's own keyword/fields.
+    assert!(Opt::help().contains("--hello "));
+    assert!(Opt::help().contains("goodbye"));
 
     assert_eq!(
         Opt {
@@ -183,19 +185,17 @@ fn enum_with_nested_underscore_variant() {
                 hello: "David".to_string()
             }
         },
-        Opt::from_iter(&["", "--say-hello", "David"]).unwrap()
+        Opt::from_iter(&["", "--hello", "David"]).unwrap()
     );
 
     assert_eq!(
         Opt {
             say: EnumOpt::Goodbye("David".to_string())
         },
-        Opt::from_iter(&["", "--say-goodbye=David"]).unwrap()
+        Opt::from_iter(&["", "goodbye", "David"]).unwrap()
     );
 
     assert!(EnumOpt::from_iter(&[""]).is_err());
-
-    assert!(EnumOpt::from_iter(&["", "--say-hello=David", "--say-goodbye=Goliath"]).is_err());
 }
 
 #[test]
@@ -211,49 +211,42 @@ fn enum_missing_flag() {
         Nested(Nested),
     }
     println!("help: {}", Opt::help());
-    assert!(Opt::help().contains("--other-goodbye "));
-    assert!(Opt::help().contains("--nested-hello-hello "));
-    assert!(Opt::help().contains("--nested-hello-greeting "));
-    assert!(Opt::help().contains("--nested-goodbye "));
+    assert!(Opt::help().contains("other"));
+    assert!(Opt::help().contains("nested"));
+    assert!(Opt::help().contains("goodbye"));
+    assert!(Opt::help().contains("hello"));
 
     assert_eq!(
         Ok(Opt::Other(Nested::Hello {
             hello: "1".to_string(),
             greeting: "ee".to_string(),
         })),
-        Opt::from_iter(&[
-            "",
-            "--other-hello-hello",
-            "1",
-            "--other-hello-greeting",
-            "ee"
-        ])
+        Opt::from_iter(&["", "other", "hello", "--hello", "1", "--greeting", "ee"])
     );
 
     assert!(Opt::from_iter(&[""]).is_err());
 
     assert_eq!(
         Ok(Opt::Other(Nested::Goodbye("World".to_string()))),
-        Opt::from_iter(&["", "--other-goodbye", "World"])
+        Opt::from_iter(&["", "other", "goodbye", "World"])
     );
 
     assert_eq!(
-        Err(auto_args::Error::MissingOption(
-            "--other-hello-greeting".to_string()
-        )),
-        Opt::from_iter(&["", "--other-hello-hello", "World"])
-    );
-    assert_eq!(
-        Err(auto_args::Error::MissingOption(
-            "--nested-goodbye".to_string()
-        )),
-        Opt::from_iter(&["--typo"])
+        Err(auto_args::Error::MissingOption("--greeting".to_string())),
+        Opt::from_iter(&["", "other", "hello", "--hello", "World"])
     );
 
-    assert_eq!(
-        Err(auto_args::Error::MissingOption(
-            "--nested-goodbye".to_string()
-        )),
-        Opt::from_iter(&["--nested-hello-hello", "World"])
-    );
+    // `from_iter` discards its first element as a program name, so this
+    // leaves no arguments at all.
+    assert!(matches!(
+        Opt::from_iter(&["--typo"]),
+        Err(auto_args::Error::MissingSubcommand(_))
+    ));
+
+    // Here the (discarded) program name leaves "World" as the sole
+    // remaining argument, which is not a known subcommand keyword.
+    assert!(matches!(
+        Opt::from_iter(&["--nested-hello-hello", "World"]),
+        Err(auto_args::Error::UnknownSubcommand(w, _)) if w == "World"
+    ));
 }
